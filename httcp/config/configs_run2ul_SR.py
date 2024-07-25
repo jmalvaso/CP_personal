@@ -29,7 +29,7 @@ def add_config(
         config_id: Optional[int] = None,
         limit_dataset_files: Optional[int] = None,
 ) -> od.Config:
-    print(f"ADDING CONFIG ---> {config_name} ---> ID: {config_id}")
+    # print(f"ADDING CONFIG ---> {config_name} ---> ID: {config_id}")
 
     # get all root processes
     procs = get_root_processes_from_campaign(campaign)

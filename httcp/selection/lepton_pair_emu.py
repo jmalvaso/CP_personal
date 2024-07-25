@@ -100,7 +100,7 @@ def get_sorted_pair(
         "Electron.charge", "Electron.pfRelIso03_all",
         "Muon.pt", "Muon.eta", "Muon.phi", "Muon.mass",
         "Muon.charge", "Muon.pfRelIso03_all",
-        "MET.pt", "MET.phi",
+        "PuppiMET.pt", "PuppiMET.phi",
     },
     exposed=False,
 )
@@ -125,7 +125,7 @@ def emu_selection(
     preselection = {
         "is_os"         : (lep1.charge * lep2.charge) < 0,
         "dr_0p5"        : deltaR(lep1, lep2) > 0.5,
-        "mT_50"         : transverse_mass(lep1, events.MET) < 50
+        "mT_50"         : transverse_mass(lep1, events.PuppiMET) < 50
     }
 
     good_pair_mask = lep1_idx >= 0

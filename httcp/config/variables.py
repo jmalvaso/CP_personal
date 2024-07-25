@@ -254,9 +254,9 @@ def add_weight_features(cfg: od.Config) -> None:
     )
     cfg.add_variable(
         name="pu_weight",
-        expression="pu_weight",
+        expression="pu_weight_from_columflow",
         null_value=EMPTY_FLOAT,
-        binning=(30, 0,3),
+        binning=(100, 0,1000),
         unit="GeV",
         x_title=r"Pileup weight",
     )

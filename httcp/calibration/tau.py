@@ -42,21 +42,31 @@ def tau_energy_scale(self: Calibrator, events: ak.Array, **kwargs) -> ak.Array:
     syst = "nom" # TODO define this systematics inside config file
      #Get working points of the DeepTau tagger
     deep_tau = self.config_inst.x.deep_tau
-   
+    
     #Create get energy scale correction for each tau
     tes_nom = np.ones_like(pt, dtype=np.float32)
     #Calculate tau ID scale factors for genuine taus
     # pt, eta, dm, genmatch, deep_tau_id, jet_wp, e_wp, syst
     mask2prong = ((dm != 5) & (dm != 6))
-    tes_args = lambda events, mask, deep_tau_obj, syst: (pt[mask],
-                                                         abseta[mask],
-                                                         dm[mask],
-                                                         match[mask],
-                                                         deep_tau_obj.tagger,
-                                                         deep_tau_obj.vs_jet,
-                                                         deep_tau_obj.vs_e,
-                                                         syst)
+    if self.config_inst.x.year in [2022,2023]:
+        tes_args = lambda events, mask, deep_tau_obj, syst: (pt[mask],
+                                                            abseta[mask],
+                                                            dm[mask],
+                                                            match[mask],
+                                                            deep_tau_obj.tagger,
+                                                            deep_tau_obj.vs_jet,
+                                                            deep_tau_obj.vs_e,
+                                                            syst)
+    else:
+        tes_args = lambda events, mask, deep_tau_obj, syst: (pt[mask],
+                                                            abseta[mask],
+                                                            dm[mask],
+                                                            match[mask],
+                                                            deep_tau_obj.tagger,
+                                                            syst)
+        
     tes_nom[mask2prong] = self.tes_corrector.evaluate(*tes_args(events, mask2prong,deep_tau, syst))
+    
     tes_nom     = np.asarray(tes_nom)
     tau_pt      = np.asarray(ak.flatten(events.Tau.pt))
     tau_mass    = np.asarray(ak.flatten(events.Tau.mass))

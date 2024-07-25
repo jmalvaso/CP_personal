@@ -150,7 +150,6 @@ def sel_tautau_a1rho(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.
 ### Cathegories for ABCD method### 
 ##################################
 
-
 @categorizer(uses={"hcand.rel_charge", "Muon.pfRelIso04_all"})
 def cat_c(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
     #Control region ( iso < 0.15, same sign pair)

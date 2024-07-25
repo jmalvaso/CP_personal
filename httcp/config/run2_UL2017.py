@@ -67,7 +67,6 @@ def add_run2_UL2017 (ana: od.Analysis,
         proc = cfg.add_process(procs.get(process_name))
         if proc.is_mc:
             if proc.name == "dy_lep": proc.color1 = (223,102,72)
-            if proc.name == "h_ggf_tautau": proc.color1 = (51,53,204)
             if proc.name == "wj": proc.color1 = (201,89,84)
             if proc.name == "tt_sl": proc.color1 = (153,153,204)
             if proc.name == "tt_dl": proc.color1 = (184,184,227)
@@ -75,7 +74,7 @@ def add_run2_UL2017 (ana: od.Analysis,
             if proc.name == "ww" : proc.color1 = (102,204,102)
             if proc.name == "wz" : proc.color1 = (49,157,49)
             if proc.name == "zz" : proc.color1 = (120,214,120)
-            
+            if proc.name == "h_ggf_tautau": proc.color1 = (51,53,204)
             if proc.name == "vv" : proc.color1 = (102,204,102)
 
         # configuration of colors, labels, etc. can happen here

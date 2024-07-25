@@ -6,7 +6,6 @@ ak = maybe_import("awkward")
 coffea = maybe_import("coffea")
 
 from httcp.production.PolarimetricA1 import PolarimetricA1
-from IPython import embed
 
 
 def GetPhiCP(
@@ -108,7 +107,6 @@ def ComputeAcopAngle(vecsdict):
        Y1     --> phase-shift for leg 1
        Y2     --> phase-shift for leg 2
     """
-    #embed()
     assert len(vecsdict) == 10, "input dict to ComputeAcopAngle does not have proper structure"
     P1 = vecsdict["P1"]
     R1 = vecsdict["R1"]
@@ -144,7 +142,6 @@ def ComputeAcopAngle(vecsdict):
 
 # PRIVATE
 def _getSign(P1,H1,P2,H2,C1,C2):
-    #embed()
     Pm = ak.where(C1 < 0, P1, P2) # check tau-
     Hm = ak.where(C1 < 0, H1, H2) # Sort according to tau charge
     Hp = ak.where(C1 < 0, H2, H1) # Same
@@ -267,7 +264,6 @@ def _prepareVecs(
     else:
         raise RuntimeError(f"Wrong {leg_method}")
 
-    #embed()
     hcand_charge = hcand.charge
     return P, R, hcand_charge
 
@@ -319,7 +315,6 @@ def _reStructureVecs(
           Y : Phase shift
         """
         pi_ZMF  = V1.boost(boostv.negative())
-        #embed()
 
         pi0_ZMF = V2.boost(boostv.negative())
         pi_ZMF_unit  = pi_ZMF.pvec.unit

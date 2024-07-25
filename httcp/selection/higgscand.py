@@ -54,14 +54,40 @@ def higgscand(
                                       "mass"          : "float64",
                                       "charge"        : "int64",
                                       "decayMode"     : "int64",
-                                      "rawIdx"        : "int64"}
+                                      "rawIdx"        : "int64",
+                                      #"IPx"           : "float64",
+                                      #"IPy"           : "float64",
+                                      #"IPz"           : "float64"
+                                  }
     )
-
+    electron = ak.where(hcand_array.decayMode == -1, hcand_array.rawIdx, -1)
+    muon = ak.where(hcand_array.decayMode == -2, hcand_array.rawIdx, -1)
+    tau = ak.where(hcand_array.decayMode >= 0, hcand_array.rawIdx, -1)
+    hcand_electron_indices = ak.flatten(electron[electron>=0],axis=-1)
+    hcand_muon_indices = ak.flatten(muon[muon>=0],axis=-1)
+    hcand_tau_indices = ak.flatten(tau[tau>=0],axis=-1)
+    
+    hcand_electron_indices = ak.values_astype(hcand_electron_indices,np.int32)
+    hcand_muon_indices = ak.values_astype(hcand_muon_indices,np.int32)
+    hcand_tau_indices = ak.values_astype(hcand_tau_indices,np.int32)
+    
     sel_hcand = ak.fill_none(ak.num(ak.firsts(hcand_array.pt, axis=1), axis=1) == 2, False)
+
 
     return events, hcand_array, SelectionResult(
         steps={
             "One_higgs_cand_per_event": sel_hcand,
+        },
+        objects={
+            "Muon": {
+                "Muon": hcand_muon_indices,
+            },
+            "Electron": {
+                "Electron": hcand_electron_indices,
+            },
+            "Tau": {
+                "Tau": hcand_tau_indices,
+            },
         },
     )
 
@@ -81,13 +107,57 @@ has_three_pions = lambda prods : (ak.sum(is_pion(prods),   axis = 1) == 3)[:,Non
 has_photons     = lambda prods : (ak.sum(is_photon(prods), axis = 1) >  0)[:,None]
 has_no_photons  = lambda prods : (ak.sum(is_photon(prods), axis = 1) == 0)[:,None]
 
+
 @selector(
     uses={
-        "channel_id", "TauProd.*",
+        "TauProd.pdgId",
+    },
+    produces={
+        "TauProd.mass", "TauProd.charge",
+    },
+    exposed=False,
+)
+def assign_tauprod_mass_charge(
+        self: Selector,
+        events: ak.Array,
+        **kwargs
+) -> ak.Array:
+    pionp  =  211
+    pionm  = -211
+    kaonp  =  321
+    kaonm  = -321
+    gamma  =  22
+
+    mass = ak.where(np.abs(events.TauProd.pdgId) == pionp, 
+                    0.13957, 
+                    ak.where(np.abs(events.TauProd.pdgId) == kaonp,
+                             0.493677,
+                             ak.where(events.TauProd.pdgId == gamma,
+                                      0.0, 0.0)) 
+    )
+    charge = ak.where(((events.TauProd.pdgId == pionp) | (events.TauProd.pdgId == kaonp)),
+                      1.0,
+                      ak.where(((events.TauProd.pdgId == pionm) | (events.TauProd.pdgId == kaonm)),
+                               -1.0,
+                               0.0)
+                  )
+
+    events = set_ak_column(events, "TauProd.mass", mass)
+    events = set_ak_column(events, "TauProd.charge", charge)    
+
+    return events
+
+
+
+@selector(
+    uses={
+        "channel_id", "TauProd.*", assign_tauprod_mass_charge,
     },
     produces={
         "hcand.pt", "hcand.eta", "hcand.phi", "hcand.mass", "hcand.charge", "hcand.rawIdx", "hcand.decayMode",
+        #"hcand.IPx", "hcand.IPy", "hcand.IPz",
         "hcandprod.pt", "hcandprod.eta", "hcandprod.phi", "hcandprod.mass", "hcandprod.charge", "hcandprod.pdgId", "hcandprod.tauIdx",
+        assign_tauprod_mass_charge,
     },
     exposed=False,
 )
@@ -100,6 +170,8 @@ def higgscandprod(
     etau_id   = self.config_inst.get_channel("etau").id
     mutau_id  = self.config_inst.get_channel("mutau").id
     tautau_id = self.config_inst.get_channel("tautau").id
+
+    events   = self[assign_tauprod_mass_charge](events)
 
     tauprods = events.TauProd
     hcand    = hcand_array #events.hcand

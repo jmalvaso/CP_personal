@@ -14,10 +14,6 @@ from columnflow.columnar_util import EMPTY_FLOAT, Route, set_ak_column, optional
 np = maybe_import("numpy")
 ak = maybe_import("awkward")
 
-from IPython import embed
-
-
-
 @producer(
     uses={
         "channel_id",
@@ -67,9 +63,6 @@ def ProducePhiCP(
     mask_rho_a1  = is_rho(p4h1) &   is_a1(p4h2)
     mask_a1_rho  = is_a1(p4h1)  &   is_rho(p4h2)
     mask_a1_a1   = is_a1(p4h1)  &   is_a1(p4h2)
-
-    #print("BABUSHCHA")
-    #embed()
 
     # GetPhiCP
     # Inputs:

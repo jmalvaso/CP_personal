@@ -95,7 +95,7 @@ def get_sorted_pair(
         "Tau.pt", "Tau.eta", "Tau.phi", "Tau.mass",
         "Tau.charge", "Tau.rawDeepTau2018v2p5VSjet", "Tau.rawIdx",
         # MET
-        "MET.pt", "MET.phi",
+        "PuppiMET.pt", "PuppiMET.phi",
     },
     exposed=False,
 )
@@ -136,7 +136,7 @@ def etau_selection(
     preselection = {
         "etau_is_os"         : (lep1.charge * lep2.charge) < 0,
         "etau_dr_0p5"        : (1*lep1).delta_r(1*lep2) > 0.5,  # deltaR(lep1, lep2) > 0.5,
-        "etau_mT_50"         : transverse_mass(lep1, events.MET) < 50
+        "etau_mT_50"         : transverse_mass(lep1, events.PuppiMET) < 50
     }
     # get preselected pairs
     good_pair_mask = lep1_idx >= 0

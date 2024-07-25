@@ -23,20 +23,21 @@ from columnflow.util import maybe_import
 from columnflow.columnar_util import optional_column as optional
 from columnflow.columnar_util import EMPTY_FLOAT, Route, set_ak_column
 
-from httcp.selection.physics_objects import *
+from httcp.selection.physics_objects import jet_selection,muon_selection,electron_selection,tau_selection,gentau_selection
 from httcp.selection.trigger import trigger_selection
 from httcp.selection.lepton_pair_etau import etau_selection
 from httcp.selection.lepton_pair_mutau import mutau_selection
 from httcp.selection.lepton_pair_tautau import tautau_selection
 from httcp.selection.event_category import get_categories
 from httcp.selection.match_trigobj import match_trigobj
-from httcp.selection.lepton_veto import *
+from httcp.selection.lepton_veto import double_lepton_veto,extra_lepton_veto
 from httcp.selection.higgscand import higgscand, higgscandprod
 
-#from httcp.production.main import cutflow_features
-from httcp.production.dilepton_features import hcand_mass, mT, rel_charge #TODO: rename mutau_vars -> dilepton_vars
+from columnflow.production.categories import category_ids
 
-from IPython import embed
+#from httcp.production.main import cutflow_features
+from httcp.production.dilepton_features import rel_charge #TODO: rename mutau_vars -> dilepton_vars
+
 
 np = maybe_import("numpy")
 ak = maybe_import("awkward")
@@ -119,13 +120,17 @@ def custom_increment_stats(
         custom_increment_stats,
         higgscand,
         gentau_selection,
-        higgscandprod,
+        higgscandprod,   
         rel_charge,
-        category_ids,
+        category_ids     
     },
     produces={
         # selectors / producers whose newly created columns should be kept
+        attach_coffea_behavior,
+        json_filter, 
+        met_filters, 
         mc_weight, 
+        process_ids,
         trigger_selection, 
         muon_selection, 
         electron_selection, 
@@ -134,15 +139,17 @@ def custom_increment_stats(
         etau_selection, 
         mutau_selection, 
         tautau_selection, 
-        get_categories, 
-        process_ids,
+        get_categories,
         extra_lepton_veto, 
         double_lepton_veto, 
         match_trigobj,
-        higgscandprod,
+        increment_stats, 
+        custom_increment_stats,
+        higgscand,
         gentau_selection,
+        higgscandprod,
         rel_charge,
-        category_ids,
+        category_ids
     },
     exposed=True,
 )
@@ -199,10 +206,9 @@ def main(
                                                                 **kwargs)
     results += tau_results
 
-    # check if there are at least two leptons with at least one tau [before trigger obj matching]
+    #check if there are at least two leptons with at least one tau [before trigger obj matching]
     _lepton_indices = ak.concatenate([good_muon_indices, good_ele_indices, good_tau_indices], axis=1)
     prematch_mask = ((ak.num(_lepton_indices, axis=1) >= 2) & (ak.num(good_tau_indices, axis=1) >= 1))
-
     # trigger obj matching
     # INFO: The end bool is the switch to make it on or off
     events, good_ele_indices, good_muon_indices, good_tau_indices = self[match_trigobj](events,
@@ -215,11 +221,10 @@ def main(
     # check if there are at least two leptons with at least one tau [after trigger obj matching]
     _lepton_indices = ak.concatenate([good_muon_indices, good_ele_indices, good_tau_indices], axis=1)
     postmatch_mask = ((ak.num(_lepton_indices, axis=1) >= 2) & (ak.num(good_tau_indices, axis=1) >= 1))
-
     match_res = SelectionResult(
         steps = {
-            "PreTrigObjMatch"  : prematch_mask,
-            "PostTrigObjMatch" : postmatch_mask
+            "trigobj_prematch"  : prematch_mask,
+            "trigobj_postmatch" : postmatch_mask
         },
     )
     results += match_res
@@ -305,19 +310,20 @@ def main(
             events, gentau_results = self[gentau_selection](events, True)
             results += gentau_results
 
-    #from IPython import embed; embed()
-    #1/0
 
-    # create process ids
-    #events = self[process_ids](events, **kwargs)
-
+   
     # combined event selection after all steps
+  
     event_sel = reduce(and_, results.steps.values())
+    
     results.event = event_sel
     
     # add the mc weight
     if self.dataset_inst.is_mc:
         events = self[mc_weight](events, **kwargs)
+    
+    events = self[rel_charge](events, **kwargs)
+    events = self[category_ids](events, **kwargs) 
 
     # rel-charge
     events = self[rel_charge](events, **kwargs)
@@ -362,12 +368,10 @@ def main(
         group_map=group_map,
         **kwargs,
     )
-    """
-    events, results = self[custom_increment_stats]( 
-        events,
-        results,
-        stats,
-    )
-    """
-    #from IPython import embed; embed()
+    # events, results = self[custom_increment_stats]( 
+    #     events,
+    #     results,
+    #     stats,
+    # )
+
     return events, results

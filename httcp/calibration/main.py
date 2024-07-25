@@ -7,7 +7,6 @@ main calibration script
 from columnflow.calibration import Calibrator, calibrator
 from columnflow.production.cms.seeds import deterministic_seeds
 from columnflow.util import maybe_import
-from columnflow.columnar_util import set_ak_column
 from httcp.calibration.tau import tau_energy_scale
 
 np = maybe_import("numpy")

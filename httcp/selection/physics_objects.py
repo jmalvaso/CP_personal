@@ -31,7 +31,7 @@ ak = maybe_import("awkward")
         # Muon nano columns
         f"Muon.{var}" for var in [
             "pt", "eta", "phi", "dxy", "dz", "mediumId", 
-            "pfRelIso04_all", "isGlobal", "isPFcand", 
+            "pfRelIso04_all", "isGlobal", "isPFcand", "pdgId",
             #"isTracker",
         ]
     },
@@ -138,7 +138,7 @@ def muon_selection(
 @selector(
     uses={
         # Electron nano columns
-        "Electron.pt", "Electron.eta", "Electron.phi", "Electron.mass", "Electron.dxy", "Electron.dz",
+        "Electron.pt", "Electron.eta", "Electron.phi", "Electron.mass", "Electron.dxy", "Electron.dz", "Electron.pdgId",
         "Electron.pfRelIso03_all", "Electron.convVeto", #"lostHits",
         IF_NANO_V9("Electron.mvaFall17V2Iso_WP80", "Electron.mvaFall17V2Iso_WP90", "Electron.mvaFall17V2noIso_WP90"),
         IF_NANO_V11("Electron.mvaIso_WP80", "Electron.mvaIso_WP90", "Electron.mvaNoIso_WP90"),
@@ -252,7 +252,7 @@ def electron_selection(
     uses={
         # Tau nano columns
         f"Tau.{var}" for var in [
-            "pt", "eta", "phi", "dz", 
+            "pt", "eta", "phi", "dz",
             "idDeepTau2018v2p5VSe", "idDeepTau2018v2p5VSmu", "idDeepTau2018v2p5VSjet",
             "decayMode",
         ]
@@ -392,7 +392,6 @@ def jet_selection(
 
     # bjet veto
     bjet_veto = ak.sum(b_jet_mask, axis=1) == 0
-    #from IPython import embed; embed()
 
     return events, SelectionResult(
         steps = {
@@ -513,7 +512,6 @@ def gentau_selection(
         _hcands_dm    = ak.where(has_2, hcands.decayMode, hcands.decayMode[:,:0])
         dm_match_mask = _hcands_dm == _gentaus_dm
         dm_match_evt_mask = ak.sum(dm_match_mask, axis=1) == 2
-    #from IPython import embed; embed()
     #1/0
     
 
@@ -537,7 +535,6 @@ def gentau_selection(
                                                                          0)))
     events = set_ak_column(events, "GenTauProd",       ak.Array(ak.to_list(decay_gentaus)))
 
-    #from IPython import embed; embed()
     #1/0
 
     return events, SelectionResult(

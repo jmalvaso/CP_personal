@@ -6,7 +6,6 @@ ak     = maybe_import("awkward")
 coffea = maybe_import("coffea")
 
 from httcp.production.TComplex import TComplex
-from IPython import embed
 
 
 class PolarimetricA1:

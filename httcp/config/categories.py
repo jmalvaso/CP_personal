@@ -144,3 +144,34 @@ def add_categories(config: od.Config) -> None:
         selection="sel_tautau_a1rho",
         label="tautau_channel_a1_rho",
     )
+    # ------------------------------- #
+    #          ABCD-METHOD            #
+    # ------------------------------- #   
+    # add_category(
+    #         config,
+    #         name="cat_a",
+    #         id=105,
+    #         selection="cat_a",
+    #         label="QCD transfer factor cat. A",
+    #     )
+    # add_category(
+    #     config,
+    #     name="cat_b",
+    #     id=106,
+    #     selection="cat_b",
+    #     label="QCD transfer factor cat. B",
+    # )
+    # add_category(
+    #     config,
+    #     name="cat_c",
+    #     id=107,
+    #     selection="cat_c",
+    #     label="QCD control region",
+    # )
+    # add_category(
+    #     config,
+    #     name="cat_d",
+    #     id=108,
+    #     selection="cat_d",
+    #     label="signal region",
+    # )

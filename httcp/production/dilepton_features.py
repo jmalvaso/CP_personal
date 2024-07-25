@@ -4,7 +4,6 @@ from columnflow.util import maybe_import
 from columnflow.columnar_util import set_ak_column, EMPTY_FLOAT, Route, optional_column as optional
 from columnflow.production.util import attach_coffea_behavior
 from httcp.util import enforce_hcand_type
-#from IPython import embed
 ak = maybe_import("awkward")
 np = maybe_import("numpy")
 coffea = maybe_import("coffea")
@@ -114,7 +113,7 @@ def hcand_mass(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
         ))
     hcand_obj = lep[0] + lep[1]
     events = set_ak_column_f32(events,f"hcand_obj.mass", ak.where(hcand_obj.mass2 >=0, hcand_obj.mass, EMPTY_FLOAT))
-    #from IPython import embed; embed()
+
      
     return events 
 

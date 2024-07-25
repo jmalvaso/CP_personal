@@ -244,7 +244,7 @@ def add_triggers_run3_2022_postEE(config: od.Config) -> None:
         # #
         # Trigger(
         #     name="HLT_IsoMu20_eta2p1_LooseDeepTauPFTauHPS27_eta2p1_CrossL1",
-        #     id=301,
+        #     id=1315,
         #     legs=[
         #         TriggerLeg(
         #             pdg_id=13, #muon
@@ -283,6 +283,73 @@ def add_triggers_run3_2022_preEE(config: od.Config) -> None:
             ],
             tags={"single_trigger", "single_mu", "channel_mu_tau"},
         ),
+        # Trigger(
+        #     name="HLT_IsoMu27",
+        #     id=132, #13 is for muon pdg_id, 1 because it's first muon trigger
+        #     legs=[
+        #         TriggerLeg(
+        #             pdg_id=13,
+        #             min_pt=25.0,
+        #             trigger_bits=2,
+        #         ),
+        #     ],
+        #     tags={"single_trigger", "single_mu", "channel_mu_tau"},
+        # ),       
+        #     Trigger(
+        #     name="HLT_Ele32_WPTight_Gsf",
+        #     id=201,
+        #     legs=[
+        #         TriggerLeg(
+        #             pdg_id=11,
+        #             min_pt=35.0,
+        #             # filter names:
+        #             # hltEle32WPTightGsfTrackIsoFilter
+        #             trigger_bits=2,
+        #         ),
+        #     ],
+        #     applies_to_dataset=(lambda dataset_inst: dataset_inst.is_mc or dataset_inst.x.era >= "A"),
+        #     tags={"single_trigger", "single_e", "channel_e_tau"},
+        # ),
+
+        # Trigger(
+        #     name="HLT_Ele35_WPTight_Gsf",
+        #     id=203,
+        #     legs=[
+        #         TriggerLeg(
+        #             pdg_id=11,
+        #             min_pt=38.0,
+        #             # filter names:
+        #             # hltEle35noerWPTightGsfTrackIsoFilter
+        #             trigger_bits=2,
+        #         ),
+        #     ],
+        #     applies_to_dataset=(lambda dataset_inst: dataset_inst.is_mc or dataset_inst.x.era >= "A"),
+        #     tags={"single_trigger", "single_e", "channel_e_tau"},
+        # ),
+        # Trigger(
+        #     name="HLT_Ele24_eta2p1_WPTight_Gsf_LooseDeepTauPFTauHPS30_eta2p1_CrossL1",
+        #     id=401,
+        #     legs=[
+        #         TriggerLeg(
+        #             pdg_id=11,
+        #             min_pt=27.0,
+        #             # filter names:
+        #             # hltEle24erWPTightGsfTrackIsoFilterForTau
+        #             # hltOverlapFilterIsoEle24WPTightGsfLooseIsoPFTau30
+        #             trigger_bits=2 + 64,
+        #         ),
+        #         TriggerLeg(
+        #             pdg_id=15,
+        #             min_pt=35.0,
+        #             # filter names:
+        #             # hltSelectedPFTau30LooseChargedIsolationL1HLTMatched
+        #             # hltOverlapFilterIsoEle24WPTightGsfLooseIsoPFTau30
+        #             trigger_bits=1024 + 256,
+        #         ),
+        #     ],
+        #     applies_to_dataset=(lambda dataset_inst: dataset_inst.is_mc or dataset_inst.x.era >= "A"),
+        #     tags={"cross_trigger", "cross_e_tau", "channel_e_tau"},
+        # ),
     ])
 
 def add_triggers_run2_UL2017(config: od.Config) -> None:
