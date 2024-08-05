@@ -9,7 +9,7 @@ from typing import Optional
 from columnflow.production import Producer, producer
 from columnflow.production.categories import category_ids
 from columnflow.production.normalization import normalization_weights
-from columnflow.production.cms.pileup import pu_weights_from_columnflow
+from columnflow.production.cms.pileup import pu_weight
 from columnflow.production.cms.seeds import deterministic_seeds
 #from columnflow.production.cms.muon import muon_weights
 from columnflow.selection.util import create_collections_from_masks
@@ -21,9 +21,9 @@ from columnflow.columnar_util import optional_column as optional
 from httcp.production.ReArrangeHcandProds import reArrangeDecayProducts, reArrangeGenDecayProducts
 from httcp.production.PhiCP_Producer import ProduceDetPhiCP, ProduceGenPhiCP
 
-from httcp.production.dilepton_features import hcand_mass, mT, rel_charge #TODO: rename mutau_vars -> dilepton_vars
 from httcp.production.weights import muon_weight, tau_weight, get_mc_weight
 from httcp.production.sample_split import split_dy
+from httcp.production.dilepton_features import hcand_mass, mT, rel_charge 
 
 np = maybe_import("numpy")
 ak = maybe_import("awkward")
@@ -79,8 +79,8 @@ def hcand_features(
 @producer(
     uses={
         normalization_weights,
-        split_dy,
-        pu_weights_from_columnflow,
+        # split_dy,
+        pu_weight,
         muon_weight,
         tau_weight,
         get_mc_weight,
@@ -89,8 +89,8 @@ def hcand_features(
     },
     produces={
         normalization_weights,
-        split_dy,
-        pu_weights_from_columnflow,
+        # split_dy,
+        pu_weight,
         muon_weight,
         get_mc_weight,
         tau_weight,
@@ -100,31 +100,29 @@ def hcand_features(
 )
 def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
 
-    # deterministic seeds
-    #events = self[deterministic_seeds](events, **kwargs)
-
     if self.dataset_inst.is_mc:
-        events = self[get_mc_weight](events, **kwargs)
+        #events = self[get_mc_weight](events, **kwargs)
+        print("Producing Normalization weights...")
         events = self[normalization_weights](events, **kwargs)
         processes = self.dataset_inst.processes.names()
-        if ak.any(['dy' in proc for proc in processes]):
-            print("Splitting Drell-Yan dataset...")
-            events = self[split_dy](events,**kwargs)
+        # if ak.any(['dy' in proc for proc in processes]):
+        #     print("Splitting Drell-Yan dataset...")
+        #     events = self[split_dy](events,**kwargs)
         print("Producing PU weights...")
-        events = self[pu_weights_from_columnflow](events, **kwargs)
+        events = self[pu_weight](events, **kwargs)
         print("Producing Muon weights...")
         events = self[muon_weight](events,do_syst = True, **kwargs)
         print("Producing Tau weights...")
         events = self[tau_weight](events,do_syst = True, **kwargs)
         if (ak.max(events.mc_weight) > 1 or 
-            ak.max(events.pu_weights_from_columnflow) > 1 or 
+            ak.max(events.pu_weight) > 1 or 
             ak.max(events.normalization_weight) > 1 or 
             ak.max(events.muon_weight_nom) > 1 or 
             ak.max(events.tau_weight_nom) > 3):
             
             with open("Check_weights.txt", "a") as file:
                 file.write(f"Max mc_weight: {ak.max(events.mc_weight)}\n")
-                file.write(f"Max pu_weight: {ak.max(events.pu_weights_from_columnflow)}\n")
+                file.write(f"Max pu_weight: {ak.max(events.pu_weight)}\n")
                 file.write(f"Max normalization_weight: {ak.max(events.normalization_weight)}\n")
                 file.write(f"Max muon_weight_nom: {ak.max(events.muon_weight_nom)}\n")
                 file.write(f"Max tau_weight_nom: {ak.max(events.tau_weight_nom)}\n")
@@ -132,7 +130,8 @@ def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     print("Producing Hcand features...")
     events = self[hcand_features](events, **kwargs)       
     # features
-    events = self[hcand_mass](events, **kwargs)
-    # events = self[mT](events, **kwargs)
+    events = self[hcand_mass](events, **kwargs) 
+
+
 
     return events

@@ -54,7 +54,27 @@ def trigger_object_matching(
 
     return any_match
 
+def hlt_path_fired(dictionary):
+    if len(dictionary) > 0:
+        max_length = 0
+        for key in dictionary.keys():
+            temp_length = ak.max(ak.num(dictionary[key], axis=1))
+            if temp_length > max_length: max_length = temp_length
 
+        hlt_condition = {}
+        for key in dictionary.keys():
+            hlt_condition[key] = ak.pad_none(dictionary[key], target=max_length)
+            hlt_condition[key] = ak.fill_none(hlt_condition[key],-1)[:,:,None]
+
+        hlt_condition_values = list(hlt_condition.values())
+        hlt_condition_values_concat = ak.concatenate(hlt_condition_values, axis=-1)
+        HLT_path_fired = ak.max(hlt_condition_values_concat, axis=-1)
+        return HLT_path_fired 
+    
+# Define the fill_missing function
+def fill_missing(arr, fill_value):
+    return ak.fill_none(arr, fill_value)
+   
 def get_dataset_lfns(
         dataset_inst: od.Dataset,
         shift_inst: od.Shift,

@@ -73,12 +73,12 @@ from httcp.config.run3_preEE import add_run3_preEE
 from cmsdb.campaigns.run3_2022_preEE_nano_tau_v12 import campaign_run3_2022_preEE_nano_tau_v12
 
 add_run3_preEE(analysis_httcp,
-               campaign_run3_2022_preEE_nano_tau_v12,
+               campaign_run3_2022_preEE_nano_tau_v12.copy(),
                config_name=f"{campaign_run3_2022_preEE_nano_tau_v12.name}",
                config_id = 4)
-# add_run3_preEE(analysis_httcp,
-#                   campaign_run3_2022_preEE_nano_tau_v12,
-#                   config_name=f"{campaign_run3_2022_preEE_nano_tau_v12.name}_limited",
-#                   config_id = 5,
-#                   limit_dataset_files=1)
+add_run3_preEE(analysis_httcp,
+                  campaign_run3_2022_preEE_nano_tau_v12.copy(),
+                  config_name=f"{campaign_run3_2022_preEE_nano_tau_v12.name}_limited",
+                  config_id = 5,
+                  limit_dataset_files=1)
 # ------------------------------------------------------------- #

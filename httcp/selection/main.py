@@ -63,8 +63,11 @@ def custom_increment_stats(
     unique_process_ids = np.unique(events.process_id)
     # increment plain counts
     n_evt_per_file = self.dataset_inst.n_events/self.dataset_inst.n_files
+
     stats["num_events"] = n_evt_per_file
-    stats["num_events_selected"] += ak.sum(event_mask, axis=0)
+    if "num_events_selected" not in stats:
+        stats["num_events_selected"] = 0
+    stats["num_events_selected"] += float(ak.sum(event_mask, axis=0))  # Ensure th
     if self.dataset_inst.is_mc:
         stats[f"sum_mc_weight"] = n_evt_per_file
         stats.setdefault(f"sum_mc_weight_per_process", defaultdict(float))
@@ -76,22 +79,47 @@ def custom_increment_stats(
     if self.dataset_inst.is_mc:
         # mc weight for selected events
         weight_map["mc_weight_selected"] = (events.mc_weight, event_mask)
-
+        
     # get and store the sum of weights in the stats dictionary
     for name, (weights, mask) in weight_map.items():
-        joinable_mask = True if mask is Ellipsis else mask
+        # Convert mask to a proper Awkward Array mask if it's Ellipsis
+        joinable_mask = mask if mask is not Ellipsis else np.ones_like(weights, dtype=bool)
 
-        # sum of different weights in weight_map for all processes
-        stats[f"sum_{name}"] += ak.sum(weights[mask])
-        # sums per process id
-        stats.setdefault(f"sum_{name}_per_process", defaultdict(float))
+        # Initialize the sum entry if it does not exist
+        if f"sum_{name}" not in stats:
+            stats[f"sum_{name}"] = 0.0
+        
+        # Compute the sum of weights for the selected mask and update stats
+        stats[f"sum_{name}"] += float(ak.sum(weights[joinable_mask]))
+
+        # Initialize sums per process if it does not exist
+        if f"sum_{name}_per_process" not in stats:
+            stats[f"sum_{name}_per_process"] = defaultdict(float)
+        
+        # Sum weights per process id
         for p in unique_process_ids:
-            stats[f"sum_{name}_per_process"][int(p)] += ak.sum(
-                weights[(events.process_id == p) & joinable_mask],
-            )
-
+            # Update the sum for this specific process
+            process_mask = (events.process_id == p) & joinable_mask
+            stats[f"sum_{name}_per_process"][int(p)] += float(ak.sum(weights[process_mask]))
     return events, results
 
+def serialize_stats(stats):
+    """
+    Converts all values in the stats dictionary to JSON serializable types.
+    """
+    serialized_stats = {}
+    for key, value in stats.items():
+        if isinstance(value, (np.int64, np.float32)):
+            serialized_stats[key] = value.item()  # Convert NumPy types to native Python types
+        elif isinstance(value, defaultdict):
+            # Convert defaultdict to a regular dictionary
+            serialized_stats[key] = {k: (v.item() if isinstance(v, (np.int64, np.float32)) else v)
+                                     for k, v in value.items()}
+        elif isinstance(value, (int, float, str)):
+            serialized_stats[key] = value  # Native Python types are already serializable
+        else:
+            serialized_stats[key] = str(value)  # Fallback for any other non-serializable types
+    return serialized_stats
 
 # exposed selectors
 # (those that can be invoked from the command line)
@@ -206,28 +234,6 @@ def main(
                                                                 **kwargs)
     results += tau_results
 
-    #check if there are at least two leptons with at least one tau [before trigger obj matching]
-    _lepton_indices = ak.concatenate([good_muon_indices, good_ele_indices, good_tau_indices], axis=1)
-    prematch_mask = ((ak.num(_lepton_indices, axis=1) >= 2) & (ak.num(good_tau_indices, axis=1) >= 1))
-    # trigger obj matching
-    # INFO: The end bool is the switch to make it on or off
-    events, good_ele_indices, good_muon_indices, good_tau_indices = self[match_trigobj](events,
-                                                                                        trigger_results,
-                                                                                        good_ele_indices,
-                                                                                        good_muon_indices,
-                                                                                        good_tau_indices,
-                                                                                        True)
-
-    # check if there are at least two leptons with at least one tau [after trigger obj matching]
-    _lepton_indices = ak.concatenate([good_muon_indices, good_ele_indices, good_tau_indices], axis=1)
-    postmatch_mask = ((ak.num(_lepton_indices, axis=1) >= 2) & (ak.num(good_tau_indices, axis=1) >= 1))
-    match_res = SelectionResult(
-        steps = {
-            "trigobj_prematch"  : prematch_mask,
-            "trigobj_postmatch" : postmatch_mask
-        },
-    )
-    results += match_res
 
     # double lepton veto
     events, extra_double_lepton_veto_results = self[double_lepton_veto](events,
@@ -258,8 +264,6 @@ def main(
     mutau_pair = ak.concatenate([events.Muon[mutau_indices_pair[:,0:1]], 
                                  events.Tau[mutau_indices_pair[:,1:2]]],
                                 axis=1)
-
-    #embed()
     # tau-tau pair i.e. hcand selection
     # e.g. [ [], [tau1, tau2], [], [], [] ]
     tautau_results, tautau_indices_pair = self[tautau_selection](events,
@@ -283,7 +287,7 @@ def main(
     results += channel_results
 
     # make sure events have at least one lepton pair
-    # hcand pair: [ [[mu1,tau1]], [[e1,tau1],[tau1,tau2]], [[mu1,tau2]], [], [[e1,tau2]] ]
+    # hcand pair: [ [[e1,tau1]], [[mu1,tau1],[tau1,tau2]], [[e1,tau2]], [[mu1,tau2]], [] ]
     hcand_pairs = ak.concatenate([etau_pair[:,None], mutau_pair[:,None], tautau_pair[:,None]], axis=1)
 
     # extra lepton veto
@@ -294,8 +298,22 @@ def main(
                                                                 hcand_pairs)
     results += extra_lepton_veto_results
     
+    #check if there are at least two leptons with at least one tau [before trigger obj matching]
+    _lepton_indices = ak.concatenate([good_muon_indices, good_ele_indices, good_tau_indices], axis=1)
+    prematch_mask = ((ak.num(_lepton_indices, axis=1) >= 2) & (ak.num(good_tau_indices, axis=1) >= 1))
     # hcand results
-    events, hcand_array, hcand_results = self[higgscand](events, hcand_pairs)
+    events, good_muon_indices, good_ele_indices, good_tau_indices, hcand_array, hcand_results = self[higgscand](events,trigger_results,hcand_pairs,True)
+    
+    # check if there are at least two leptons with at least one tau [after trigger obj matching]
+    _lepton_indices = ak.concatenate([good_muon_indices, good_ele_indices, good_tau_indices], axis=1)
+    postmatch_mask = ((ak.num(_lepton_indices, axis=1) >= 2) & (ak.num(good_tau_indices, axis=1) >= 1))
+    match_res = SelectionResult(
+        steps = {
+            "trigobj_prematch"  : prematch_mask,
+            "trigobj_postmatch" : postmatch_mask
+        },
+    )
+    results += match_res
     results += hcand_results
 
     # hcand prod results
@@ -334,6 +352,7 @@ def main(
     events = self[process_ids](events, **kwargs)
     events = self[category_ids](events, **kwargs)     
 
+
    
     # increment stats
     weight_map = {
@@ -360,18 +379,14 @@ def main(
                 "mask_fn": (lambda v: events.channel_id == v),
             },
         }
-    events, results = self[increment_stats](
-        events,
-        results,
-        stats,
-        weight_map=weight_map,
-        group_map=group_map,
-        **kwargs,
-    )
-    # events, results = self[custom_increment_stats]( 
-    #     events,
-    #     results,
-    #     stats,
+
+    # stats = serialize_stats(stats)
+
+    events, results = self[increment_stats](events,results,stats,weight_map=weight_map,group_map=group_map,**kwargs)
+    # events, results = self[increment_stats]( 
+        # weight_map=weight_map,
+        # group_map=group_map,
+        # **kwargs,
     # )
 
     return events, results

@@ -2,7 +2,7 @@
 
 set_common_vars() {
 
-version="test"
+version="dev"
 case $1 in
     "run2" )
         config=run2_UL2018_nano_tau_v10_limited
@@ -38,26 +38,20 @@ case $1 in
     "run3_data")
         config="run3_2022_preEE_nano_tau_v12"
         #Datasets to use
-        datasets="data_mu_c,data_mu_d"
+        datasets="data_mu,data_mu_D"
         processes="data"
     ;;
     "run3_DY")
     config="run3_2022_preEE_nano_tau_v12"
     #Datasets to use
     datasets="dy_incl"
-    processes="dy_z2tautau,dy_z2mumu,dy_z2ee"
+    processes="dy_lep" #dy_z2tautau,dy_z2mumu,dy_z2ee
     ;;
-    # "run3_data_dy_wj_vv_tt_st")
-    # config="run3_2022_preEE_nano_tau_v12"
-    # #Datasets to use
-    # datasets="st_tchannel_t,st_tchannel_tbar,st_twchannel_t_sl,st_twchannel_tbar_sl,st_twchannel_t_dl,st_twchannel_tbar_dl,st_twchannel_tbar_fh,tt_sl,tt_dl,tt_fh,ww,zz,wz,dy_incl,wj_incl,data_mu_c,data_mu_d"
-    # processes="st,tt,vv,dy_lep,wj,data"
-    # ;;
     "run3_data_dy_wj_vv_tt_st")
     config="run3_2022_preEE_nano_tau_v12"
     #Datasets to use
-    datasets="data_mu_c,data_mu_d,dy_incl,wj_incl,ww,zz,wz,tt_sl,tt_dl,tt_fh,st_tchannel_t,st_tchannel_tbar,st_twchannel_t_sl,st_twchannel_tbar_sl,st_twchannel_t_dl,st_twchannel_tbar_dl,st_twchannel_tbar_fh"
-    processes="st,tt,vv,dy_lep,wj,data"
+    datasets="data_mu_C,data_mu_D,dy_incl,wj_incl,ww,zz,wz,tt_dl,st_tchannel_t,st_tchannel_tbar,st_twchannel_t_sl,st_twchannel_tbar_sl,st_twchannel_t_dl,st_twchannel_tbar_dl,st_twchannel_tbar_fh"
+    processes="st,tt_dl,vv,dy_lep,wj,data"
     ;; 
     "run3_wj")
     config="run3_2022_preEE_nano_tau_v12"

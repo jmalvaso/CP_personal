@@ -9,7 +9,7 @@ from columnflow.selection import Selector, SelectionResult, selector
 from columnflow.util import maybe_import
 from columnflow.columnar_util import EMPTY_FLOAT, Route, set_ak_column
 
-from httcp.util import enforce_hcand_type
+from httcp.util import enforce_hcand_type,trigger_object_matching,hlt_path_fired
 
 np = maybe_import("numpy")
 ak = maybe_import("awkward")
@@ -26,17 +26,141 @@ coffea = maybe_import("coffea")
 def higgscand(
         self: Selector,
         events: ak.Array,
+        trigger_results: SelectionResult,
         hcand_pair: ak.Array,
+        domatch: Optional[bool] = False,
         **kwargs
 ) -> tuple[ak.Array, SelectionResult]:
 
+    #Extraction of the indices from Hcand_pair
+    etau_objects_idx = hcand_pair[:,0].rawIdx
+    etau_e_idx = etau_objects_idx[:,0:1]
+    etau_tau_idx = etau_objects_idx[:,1:2]
+    
+    mutau_objects = hcand_pair[:,1].rawIdx
+    mutau_mu_idx = mutau_objects[:,0:1]
+    mutau_tau_idx = mutau_objects[:,1:2]
+    
+    tautau_objects = hcand_pair[:,2].rawIdx
+    tautau_tau1_idx = tautau_objects[:,0:1]
+    tautau_tau2_idx = tautau_objects[:,1:2]
+    
+    #Objects to match
+    e_to_match = events.Electron[etau_e_idx]
+    tau_etau_to_mach = events.Tau[etau_tau_idx]
+    
+    mu_to_match = events.Muon[mutau_mu_idx]
+    tau_mutau_to_mach = events.Tau[mutau_tau_idx]
+    
+    tau1_tautau_to_match = events.Tau[tautau_tau1_idx]
+    tau2_tautau_to_mach = events.Tau[tautau_tau2_idx]
+    
+    false_mask = (abs(events.event) < 0)
+    single_electron_triggered = false_mask
+    cross_electron_triggered  = false_mask
+    single_muon_triggered = false_mask
+    cross_muon_triggered  = false_mask
+    cross_tau_triggered  = false_mask
+    
+    hlt_path_fired_e   = {}
+    hlt_path_fired_mu  = {}   
+    hlt_path_fired_tau = {}      
+
+    if  domatch:
+        # perform each lepton election step separately per trigger
+        for trigger, trigger_fired, leg_masks in trigger_results.x.trigger_data:
+            print(f"trigger: {trigger}")
+            print(f"trigger_fired: {trigger_fired}")
+            print(f"leg_masks:  {leg_masks}")
+            
+            is_single_el = trigger.has_tag("single_e")
+            is_cross_el  = trigger.has_tag("cross_e_tau")
+            is_single_mu = trigger.has_tag("single_mu")
+            is_cross_mu  = trigger.has_tag("cross_mu_tau")
+            is_cross_tau = trigger.has_tag("cross_tau_tau")
+            
+            if is_single_mu or is_cross_mu:
+                mu_matches_leg0 = None
+                # muon selection
+                muons = mu_to_match
+                taus = tau_mutau_to_mach
+                # start per-muon mask with trigger object matching
+                if is_single_mu:
+                    # catch config errors
+                    assert trigger.n_legs == len(leg_masks) == 1
+                    assert abs(trigger.legs[0].pdg_id) == 13
+                    # match leg 0
+                    mu_matches_leg0 = trigger_object_matching(muons, events.TrigObj[leg_masks[0]])
+                    single_muon_triggered = ak.where(trigger_fired & is_single_mu, True, single_muon_triggered)
+                    hlt_path_fired_mu[trigger.hlt_field]= ak.where(mu_matches_leg0, trigger.id,-1)                    
+                elif is_cross_mu:
+                    # catch config errors
+                    assert trigger.n_legs == len(leg_masks) == 2
+                    assert abs(trigger.legs[0].pdg_id) == 13
+                    assert abs(trigger.legs[1].pdg_id) == 15
+                    # match leg 0
+                    mu_matches_leg0 = trigger_object_matching(muons, events.TrigObj[leg_masks[0]])
+                    tau_matches_leg1 = trigger_object_matching(taus, events.TrigObj[leg_masks[1]])
+                    cross_muon_triggered = ak.where(trigger_fired & is_cross_mu, True, cross_muon_triggered)
+                    hlt_path_fired_mu[trigger.hlt_field]= ak.where(mu_matches_leg0 & tau_matches_leg1, trigger.id,-1)                    
+
+            if is_single_el or is_cross_el:
+                el_matches_leg0 = None
+                # electron selection
+                electrons = e_to_match
+                taus = tau_etau_to_mach
+                # start per-muon mask with trigger object matching
+                if is_single_el:
+                    # catch config errors
+                    assert trigger.n_legs == len(leg_masks) == 1
+                    assert abs(trigger.legs[0].pdg_id) == 11
+                    # match leg 0
+                    el_matches_leg0 = trigger_object_matching(electrons, events.TrigObj[leg_masks[0]])
+                    single_electron_triggered = ak.where(trigger_fired & is_single_el, True, single_electron_triggered)
+                    hlt_path_fired_e[trigger.hlt_field]= ak.where(el_matches_leg0, trigger.id,-1)
+                elif is_cross_el:
+                    # catch config errors
+                    assert trigger.n_legs == len(leg_masks) == 2
+                    assert abs(trigger.legs[0].pdg_id) == 11
+                    assert abs(trigger.legs[1].pdg_id) == 15
+                    # match leg 0
+                    el_matches_leg0 = trigger_object_matching(electrons, events.TrigObj[leg_masks[0]])
+                    tau_matches_leg1 = trigger_object_matching(taus, events.TrigObj[leg_masks[1]])
+                    cross_electron_triggered = ak.where(trigger_fired & is_cross_el, True, cross_electron_triggered)
+                    hlt_path_fired_e[trigger.hlt_field]= ak.where(el_matches_leg0 & tau_matches_leg1, trigger.id,-1)
+
+            if is_cross_tau:
+                # catch config errors
+                assert trigger.n_legs == len(leg_masks) == 2
+                assert abs(trigger.legs[0].pdg_id) == 15
+                assert abs(trigger.legs[1].pdg_id) == 15
+                taus1 = tau1_tautau_to_match 
+                tau2 = tau2_tautau_to_mach
+                # match both legs
+                tau_matches_leg0 = trigger_object_matching(taus1, events.TrigObj[leg_masks[0]])
+                tau_matches_leg1 = trigger_object_matching(taus2, events.TrigObj[leg_masks[1]])
+                is_cross_tau = tau_matches_leg0 & tau_matches_leg1
+                cross_tau_triggered = ak.where(trigger_fired & is_cross_tau, True, cross_tau_triggered)
+                hlt_path_fired_tau[trigger.hlt_field]= ak.where(is_cross_tau, trigger.id,-1)
+        
+        triggerID_e   = hlt_path_fired(hlt_path_fired_e  ) if len(hlt_path_fired_e  ) > 0 else print("No electrons match any trigger or no electron trigger required") 
+        triggerID_mu  = hlt_path_fired(hlt_path_fired_mu ) if len(hlt_path_fired_mu ) > 0 else print("No muons match any trigger or no muons trigger required")
+        triggerID_tau = hlt_path_fired(hlt_path_fired_tau) if len(hlt_path_fired_tau) > 0 else print("No taus match any trigger or no taus trigger required")   
+    
+    
+    
     sel_hcand = ak.sum(ak.num(hcand_pair.pt, axis=-1), axis=1) == 2
-
+    
+    #channel_id 1,2,4 etau,mutau,tautau
     empty_hcand_pair = hcand_pair[:,:0][:,None]
-    hcand_pair_concat = ak.where(events.channel_id == 1, hcand_pair[:,0][:,None], empty_hcand_pair)
-    hcand_pair_concat = ak.where(events.channel_id == 2, hcand_pair[:,1][:,None], hcand_pair_concat)
-    hcand_pair_concat = ak.where(events.channel_id == 4, hcand_pair[:,2][:,None], hcand_pair_concat)
-
+    etau_channel_mask =  (events.channel_id == 1) & (single_electron_triggered | cross_electron_triggered)
+    mutau_channel_mask =  (events.channel_id == 2) & (single_muon_triggered | cross_muon_triggered)
+    tautau_channel_mask =  (events.channel_id == 4) & (cross_tau_triggered)
+    hcand_pair_concat = ak.where(etau_channel_mask, hcand_pair[:,0][:,None], empty_hcand_pair)
+    hcand_pair_concat = ak.where(mutau_channel_mask, hcand_pair[:,1][:,None], hcand_pair_concat)
+    hcand_pair_concat = ak.where(tautau_channel_mask, hcand_pair[:,2][:,None], hcand_pair_concat)
+    
+    #channel_id 3,5,6 etau_mutau,etau_tautau,mutau_tautau 
     hcand_pair_concat = ak.where(events.channel_id == 3, 
                                  ak.concatenate([hcand_pair[:,0][:,None], hcand_pair[:,1][:,None]], axis=1),
                                  hcand_pair_concat)
@@ -60,6 +184,7 @@ def higgscand(
                                       #"IPz"           : "float64"
                                   }
     )
+
     electron = ak.where(hcand_array.decayMode == -1, hcand_array.rawIdx, -1)
     muon = ak.where(hcand_array.decayMode == -2, hcand_array.rawIdx, -1)
     tau = ak.where(hcand_array.decayMode >= 0, hcand_array.rawIdx, -1)
@@ -74,7 +199,7 @@ def higgscand(
     sel_hcand = ak.fill_none(ak.num(ak.firsts(hcand_array.pt, axis=1), axis=1) == 2, False)
 
 
-    return events, hcand_array, SelectionResult(
+    return events,hcand_muon_indices, hcand_electron_indices,hcand_tau_indices,hcand_array, SelectionResult(
         steps={
             "One_higgs_cand_per_event": sel_hcand,
         },
@@ -220,16 +345,16 @@ def higgscandprod(
     
     hcand_prods = ak.concatenate([hcand1prods[:,None], hcand2prods[:,None]], axis=1)
 
-    hcand_prods_array = enforce_hcand_type(ak.from_regular(hcand_prods),
-                                           {"pt"            : "float64",
-                                            "eta"           : "float64",
-                                            "phi"           : "float64",
-                                            "mass"          : "float64",
-                                            "charge"        : "int64",
-                                            "pdgId"         : "int64",
-                                            "tauIdx"        : "int64"}
-                                       )
-
+    # hcand_prods_array = enforce_hcand_type(ak.from_regular(hcand_prods),
+    #                                        {"pt"            : "float64",
+    #                                         "eta"           : "float64",
+    #                                         "phi"           : "float64",
+    #                                         "mass"          : "float64",
+    #                                         "charge"        : "int64",
+    #                                         "pdgId"         : "int64",
+    #                                         "tauIdx"        : "int64"}
+    #                                    )
+    hcand_prods_array = ak.from_regular(hcand_prods)
     events = set_ak_column(events, "hcand",     hcand_concat)
     events = set_ak_column(events, "hcandprod", hcand_prods_array)
 

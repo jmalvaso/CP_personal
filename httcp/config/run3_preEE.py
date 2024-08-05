@@ -276,18 +276,17 @@ def add_run3_preEE(ana: od.Analysis,
     #         "mc"   : "/afs/cern.ch/user/j/jmalvaso/public/MC_PileUp_2022.root",
     #     },
     
-    corr_dir = "/afs/cern.ch/user/j/jmalvaso/CP_CF_old/CPinHToTauTau/httcp/corrections"
+    corr_dir = "/afs/cern.ch/user/j/jmalvaso/CP_personal/httcp/corrections"
     cfg.x.external_files = DotDict.wrap({
         # lumi files
         "lumi": {
-            "golden": (f"{corr_dir}/Cert_Collisions2022_355100_362760_GoldenJSON.txt", "v1"),  # https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions18/13TeV/Legacy_2018/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON.txt
+            "golden": (f"{corr_dir}/Cert_Collisions2022_355100_362760_Golden.json", "v1"),  # https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions18/13TeV/Legacy_2018/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON.txt
             "normtag": (f"{corr_dir}/normtag_PHYSICS.json", "v1"), #/cvmfs/cms-bril.cern.ch/cms-lumi-pog/Normtags
         },
-        "pu_sf": (f"{corr_dir}/jsonpog-integration/POG/LUM/{year}_Summer22/puWeights.json.gz", "v1"),
-        "muon_correction" : f"{corr_dir}/jsonpog-integration/POG/MUO/{year}_Summer22/muon_Z.json.gz",
-        # "muon_correction" : "/afs/cern.ch/work/d/dwinterb/public/Run3_corrections/muon_SFs_2022_preEE.root",
-        "tau_correction" : "/afs/cern.ch/user/j/jmalvaso/CP_CF_old/CPinHToTauTau/httcp/data/corrections/tau_DeepTau2018v2p5_2022_preEE.json.gz"
-        # "tau_correction"  : f"{corr_dir}/jsonpog-integration/POG/TAU/{cfg.x.year}_UL/tau.json.gz",
+        "pu_sf": (f"{corr_dir}/jsonpog-integration/POG/LUM/2022_Summer22/puWeights.json.gz", "v1"),
+        "muon_correction" : f"{corr_dir}/jsonpog-integration/POG/MUO/2022_Summer22/muon_Z.json.gz",
+        "tau_correction" : f"{corr_dir}/tau_DeepTau2018v2p5_2022_preEE.json.gz"
+
     })
 
 

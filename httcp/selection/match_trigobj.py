@@ -79,9 +79,9 @@ def match_trigobj(
     if domatch:
         # perform each lepton election step separately per trigger
         for trigger, trigger_fired, leg_masks in trigger_results.x.trigger_data:
-            #print(f"trigger: {trigger}")
-            #print(f"trigger_fired: {trigger_fired}")
-            #print(f"leg_masks:  {leg_masks}")
+            print(f"trigger: {trigger}")
+            print(f"trigger_fired: {trigger_fired}")
+            print(f"leg_masks:  {leg_masks}")
             
             is_single_el = trigger.has_tag("single_e")
             is_cross_el  = trigger.has_tag("cross_e_tau")
@@ -161,10 +161,10 @@ def match_trigobj(
                     tau_matches = cross_mask
                     cross_tau_triggered = ak.where(trigger_fired & is_cross_tau, True, cross_tau_triggered)
                 hlt_path_fired_tau[trigger.hlt_field]= ak.where(tau_matches, trigger.id,-1)
-        
-        triggerID_e   = hlt_path_fired(hlt_path_fired_e  ) if len(hlt_path_fired_e  ) > 0 else ak.values_astype(ak.ones_like(electron_indices), np.int32)
-        triggerID_mu  = hlt_path_fired(hlt_path_fired_mu ) if len(hlt_path_fired_mu ) > 0 else ak.values_astype(ak.ones_like(muon_indices), np.int32)
-        triggerID_tau = hlt_path_fired(hlt_path_fired_tau) if len(hlt_path_fired_tau) > 0 else ak.values_astype(ak.ones_like(tau_indices), np.int32)        
+
+        triggerID_e   = hlt_path_fired(hlt_path_fired_e  ) if len(hlt_path_fired_e  ) > 0 else ak.values_astype(ak.ones_like(electron_indices), np.int64)
+        triggerID_mu  = hlt_path_fired(hlt_path_fired_mu ) if len(hlt_path_fired_mu ) > 0 else ak.values_astype(ak.ones_like(muon_indices), np.int64)
+        triggerID_tau = hlt_path_fired(hlt_path_fired_tau) if len(hlt_path_fired_tau) > 0 else ak.values_astype(ak.ones_like(tau_indices), np.int64)        
         
         mask_triggerID_e = ak.fill_none(triggerID_e > 0, False)
         matched_idx_e = electron_indices[mask_triggerID_e]
@@ -180,14 +180,28 @@ def match_trigobj(
 
         electron_indices = matched_idx_e
         muon_indices = matched_idx_mu
-        tau_indices = matched_idx_tau
+        tau_indices = matched_idx_tau   
+    
+    event_match_e_trigger = ak.fill_none(ak.where(matched_triggerID_e >= 0, True, False), False)
+    event_match_muon_trigger = ak.fill_none(ak.where(matched_triggerID_mu >= 0, True, False), False)
+    event_match_tau_trigger = ak.fill_none(ak.where(matched_triggerID_tau >= 0, True, False), False)
 
+    # Best_triggerID_per_event = ak.concatenate([matched_triggerID_e,matched_triggerID_mu,matched_triggerID_tau],axis = 1)
+    # Best_triggerID_per_event = ak.max(Best_triggerID_per_event,axis=1)
+    # Best_triggerID_per_event = ak.fill_none(Best_triggerID_per_event,-1)
 
-    sel_electron_indices = ak.values_astype(electron_indices, np.int32)
-    sel_muon_indices = ak.values_astype(muon_indices, np.int32)
-    sel_tau_indices = ak.values_astype(tau_indices, np.int32)
-
-
+    # mask_event_SingleMu_trigger = (Best_triggerID_per_event>=131) 
+    # mask_event_SingleE_trigger = (Best_triggerID_per_event>=111) & (Best_triggerID_per_event<131)
+    # mask_event_ETau_trigger = (Best_triggerID_per_event == 15) & ak.any()
+    
+    # sel_electron_indices = ak.where(mask_event_SingleE_trigger, matched_idx_e, electron_indices)
+    # sel_electron_indices = ak.where(mask_event_SingleMu_trigger, matched_idx_mu, muon_indices)
+    # sel_tau_indices      =  ak.where(mask_event_ETau_trigger, matched_idx_tau, muon_indices)
+    
+    sel_electron_indices = ak.values_astype(electron_indices, np.int64)
+    sel_muon_indices = ak.values_astype(muon_indices, np.int64)
+    sel_tau_indices = ak.values_astype(tau_indices, np.int64)
+    
     events = set_ak_column(events, "matched_triggerID_e", matched_triggerID_e)
     events = set_ak_column(events, "matched_triggerID_mu", matched_triggerID_mu)
     events = set_ak_column(events, "matched_triggerID_tau", matched_triggerID_tau)
@@ -199,4 +213,4 @@ def match_trigobj(
     events = set_ak_column(events, "cross_tau_triggered", cross_tau_triggered)
                 
     
-    return events, sel_electron_indices, sel_muon_indices, sel_tau_indices 
+    return events, sel_electron_indices, sel_muon_indices, sel_tau_indices

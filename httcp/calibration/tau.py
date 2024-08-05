@@ -48,7 +48,8 @@ def tau_energy_scale(self: Calibrator, events: ak.Array, **kwargs) -> ak.Array:
     #Calculate tau ID scale factors for genuine taus
     # pt, eta, dm, genmatch, deep_tau_id, jet_wp, e_wp, syst
     mask2prong = ((dm != 5) & (dm != 6))
-    if self.config_inst.x.year in [2022,2023]:
+
+    if self.config_inst.campaign.x.year in [2022,2023]:
         tes_args = lambda events, mask, deep_tau_obj, syst: (pt[mask],
                                                             abseta[mask],
                                                             dm[mask],

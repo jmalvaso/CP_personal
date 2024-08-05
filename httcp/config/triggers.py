@@ -289,7 +289,7 @@ def add_triggers_run3_2022_preEE(config: od.Config) -> None:
         #     legs=[
         #         TriggerLeg(
         #             pdg_id=13,
-        #             min_pt=25.0,
+        #             min_pt=28.0,
         #             trigger_bits=2,
         #         ),
         #     ],
@@ -297,11 +297,11 @@ def add_triggers_run3_2022_preEE(config: od.Config) -> None:
         # ),       
         #     Trigger(
         #     name="HLT_Ele32_WPTight_Gsf",
-        #     id=201,
+        #     id=111,
         #     legs=[
         #         TriggerLeg(
         #             pdg_id=11,
-        #             min_pt=35.0,
+        #             min_pt=33.0,
         #             # filter names:
         #             # hltEle32WPTightGsfTrackIsoFilter
         #             trigger_bits=2,
@@ -313,11 +313,11 @@ def add_triggers_run3_2022_preEE(config: od.Config) -> None:
 
         # Trigger(
         #     name="HLT_Ele35_WPTight_Gsf",
-        #     id=203,
+        #     id=112,
         #     legs=[
         #         TriggerLeg(
         #             pdg_id=11,
-        #             min_pt=38.0,
+        #             min_pt=36.0,
         #             # filter names:
         #             # hltEle35noerWPTightGsfTrackIsoFilter
         #             trigger_bits=2,
@@ -328,7 +328,7 @@ def add_triggers_run3_2022_preEE(config: od.Config) -> None:
         # ),
         # Trigger(
         #     name="HLT_Ele24_eta2p1_WPTight_Gsf_LooseDeepTauPFTauHPS30_eta2p1_CrossL1",
-        #     id=401,
+        #     id=15,
         #     legs=[
         #         TriggerLeg(
         #             pdg_id=11,

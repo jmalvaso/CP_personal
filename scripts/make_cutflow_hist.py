@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import matplotlib.pyplot as plt
 import mplhep
 import pickle
@@ -29,7 +28,7 @@ def create_cutflow_histogram(cuts, data, xlabel="Selections", ylabel="Selection 
     fig, ax = plt.subplots()
     if log: plt.yscale('log')
     # Plotting the cutflow histogram
-    color = ['black','red']
+    color = ['blue', 'black','red']
     
     for i, (name, n_evt) in enumerate(data.items()):
         
@@ -39,14 +38,30 @@ def create_cutflow_histogram(cuts, data, xlabel="Selections", ylabel="Selection 
         if rel:
             x = cuts[1:]
             y = n_evt[1:]/n_evt[:-1]
-        else:
+        elif not log:
             x = cuts
             y = n_evt/n_evt[0]
+        else:
+            x = cuts
+            y = n_evt
         print(f'Event numbers:')
-        ax.scatter(x, y , color=color[i], marker='o', alpha=0.8, label=f"Data {name}")
-        n_evt_prev = n_evt
+        # ax.step(x, y , color=color[i], where='mid',marker='o', linewidth=1.2, alpha=0.8, label=r"Z $\rightarrow \ell \ell$")
+        #ax.step(x, y , color=color[i], where='mid',marker='o', linewidth=1.2, alpha=0.8, label=r"W $\rightarrow \ell \nu$")
+        ax.step(x, y , color=color[i], where='mid',marker='o', linewidth=1.2, alpha=0.8, label=r"Data")
+        for i, txt in enumerate(y):
+            the_txt = f'{txt:.4f}' if rel else f'{txt:.0f}'
+            ax.annotate(the_txt, (x[i], y[i]),
+                        textcoords="offset points",
+                        xytext=(0,-20),
+                        ha='center',
+                        fontsize=10)
 
-    if log: ax.set_ylim((1*10**-2,2*10**0))
+    if log:
+        if rel: ax.set_ylim((1*10**-6,2*10**0))
+        else: 
+            pow_nevt = int(np.log10(n_evt[0]))+1.1
+            ax.set_ylim((10**(4),10**pow_nevt))
+    
     # Set labels and title
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
@@ -72,10 +87,10 @@ def create_cutflow_histogram(cuts, data, xlabel="Selections", ylabel="Selection 
     }
     cms_label_kwargs = {
         "ax": ax,
-        "llabel": label_options.get("pw"),
+        "llabel": label_options.get("simwip"),
         "fontsize": 22,
         "data": True,
-        'rlabel': "Data to Data"
+        'rlabel': name
     }
     mplhep.cms.label(**cms_label_kwargs)
    
@@ -107,12 +122,17 @@ def get_hist_values(pickle_file):
  
 
 
-
-path22 = "/afs/cern.ch/user/j/jmalvaso/CP_CF_old/CPinHToTauTau/data/cf_store/analysis_httcp/cf.CreateCutflowHistograms/run3_2022_preEE_nano_tau_v12/data_mu_c/nominal/calib__main/sel__main__steps_trigger_met_filter_b_veto_PreTrigObjMatch_PostTrigObjMatch_One_higgs_cand_per_event_extra_lepton_veto/test/cutflow_hist__event.pickle"
+#DY
+# path22 = "/afs/cern.ch/user/j/jmalvaso/CP_personal/data/cf_store/analysis_httcp/cf.CreateCutflowHistograms/run3_2022_preEE_nano_tau_v12/dy_incl/nominal/calib__main/sel__main__steps_trigger_met_filter_b_veto_dilepton_veto_extra_lepton_veto_trigobj_prematch_trigobj_postmatch_One_higgs_cand_per_event_has_proper_tau_decay_products/dev/cutflow_hist__event.pickle"
+#WJ
+#path22 = "/afs/cern.ch/user/j/jmalvaso/CP_personal/data/cf_store/analysis_httcp/cf.CreateCutflowHistograms/run3_2022_preEE_nano_tau_v12/wj_incl/nominal/calib__main/sel__main__steps_trigger_met_filter_b_veto_dilepton_veto_extra_lepton_veto_trigobj_prematch_trigobj_postmatch_One_higgs_cand_per_event_has_proper_tau_decay_products/dev/cutflow_hist__event.pickle"
+#Data
+path22 = "/afs/cern.ch/user/j/jmalvaso/CP_personal/data/cf_store/analysis_httcp/cf.CreateCutflowHistograms/run3_2022_preEE_nano_tau_v12/data_mu_D/nominal/calib__main/sel__main__steps_trigger_met_filter_b_veto_dilepton_veto_extra_lepton_veto_trigobj_prematch_trigobj_postmatch_One_higgs_cand_per_event_has_proper_tau_decay_products/dev/cutflow_hist__event.pickle"
 cuts, values22 = get_hist_values(path22)
 
 create_cutflow_histogram(cuts, 
-                         data={"2022_postEE": values22},
-                         save_path="mutau_cutflow_histogram_l.pdf",
-                         log=False,
-                         rel=True)
+                         data={"2022 preEE": values22},
+                         save_path="cutflow_histogram_2022_preEE_Data.png",
+                         ylabel="N evt",
+                         log=True,
+                         rel=False)

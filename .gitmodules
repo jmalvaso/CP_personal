@@ -3,4 +3,7 @@
 	url = https://github.com/columnflow/columnflow.git
 [submodule "modules/cmsdb"]
 	path = modules/cmsdb
-	url = https://github.com/uhh-cms/cmsdb.git
+	url = https://github.com/uhh-cms/cmsdb.git	
+[submodule "httcp/corrections/jsonpog-integration"]
+	path = httcp/corrections/jsonpog-integration
+	url =  ssh://git@gitlab.cern.ch:7999/cms-nanoAOD/jsonpog-integration.git
