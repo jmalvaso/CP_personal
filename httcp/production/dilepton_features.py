@@ -98,8 +98,7 @@ def hcand_mass(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     from coffea.nanoevents.methods import vector
     events = self[attach_coffea_behavior](events, **kwargs)
     lep = []
-    for i in range(2):
-        
+    for i in range(2):  
         hcand_lep = events.hcand[:,i]
         lep.append( ak.zip(
             {

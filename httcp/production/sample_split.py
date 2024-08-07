@@ -32,14 +32,16 @@ def split_dy(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
         "tau_had"   : 5
     }
     hcand_ele_mu_DM = events.hcand.decayMode[:,:1]
-    hcand_Tau_idx = events.hcand.rawIdx[:,1:2]
-    mask_hcand_tau_idx = ak.flatten(hcand_Tau_idx)
-    match = events.Tau.genPartFlav[mask_hcand_tau_idx]
-    mu2tau_fakes_mask = (match == tau_part_flav["prompt_mu"]) 
-    e2tau_fakes_mask = (match == tau_part_flav["prompt_e"])
-    process_id = np.array(events.process_id,dtype=np.int64)*ak.ones_like(mu2tau_fakes_mask)
-    process_id = ak.where(mu2tau_fakes_mask & hcand_ele_mu_DM == -2, 51001, 51002)
-    process_id = ak.where(e2tau_fakes_mask & hcand_ele_mu_DM == -1, 51003, process_id)
+    # hcand_Tau_idx = events.hcand.rawIdx[:,1:2]
+    # mask_hcand_tau_idx = ak.flatten(hcand_Tau_idx)
+    match = events.Tau.genPartFlav
+    mu2tau_fakes_mask = ((match == tau_part_flav["prompt_mu"]) | (match == tau_part_flav["tau->mu"])) 
+    e2tau_fakes_mask = ((match == tau_part_flav["prompt_e"]) | (match == tau_part_flav["tau->e"]))
+    genuine_tau_mask = (match == tau_part_flav["tau_had"])
+    process_id = np.array(events.process_id,dtype=np.int64)
+    # np.array(events.process_id,dtype=np.int64)*ak.ones_like(events.process_id)
+    process_id = ak.where((mu2tau_fakes_mask & (hcand_ele_mu_DM == -2)), 51001, 51004)
+    process_id = ak.where((e2tau_fakes_mask & (hcand_ele_mu_DM == -1)), 51003, process_id)
     events = remove_ak_column(events, "process_id")
     events = set_ak_column(events, "process_id", process_id, value_type=np.int32)
     return events

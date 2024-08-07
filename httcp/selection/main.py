@@ -44,82 +44,6 @@ ak = maybe_import("awkward")
 coffea = maybe_import("coffea")
 
 
-@selector(uses={"process_id", optional("mc_weight")}) #TODO: Move it to utils
-def custom_increment_stats(
-    self: Selector,
-    events: ak.Array,
-    results: SelectionResult,
-    stats: dict,
-    **kwargs,
-) -> ak.Array:
-    """
-    Unexposed selector that does not actually select objects but instead increments selection
-    *stats* in-place based on all input *events* and the final selection *mask*.
-    """
-    # get event masks
-    event_mask = results.event
-
-    # get a list of unique process ids present in the chunk
-    unique_process_ids = np.unique(events.process_id)
-    # increment plain counts
-    n_evt_per_file = self.dataset_inst.n_events/self.dataset_inst.n_files
-
-    stats["num_events"] = n_evt_per_file
-    if "num_events_selected" not in stats:
-        stats["num_events_selected"] = 0
-    stats["num_events_selected"] += float(ak.sum(event_mask, axis=0))  # Ensure th
-    if self.dataset_inst.is_mc:
-        stats[f"sum_mc_weight"] = n_evt_per_file
-        stats.setdefault(f"sum_mc_weight_per_process", defaultdict(float))
-        for p in unique_process_ids:
-            stats[f"sum_mc_weight_per_process"][int(p)] = n_evt_per_file
-        
-    # create a map of entry names to (weight, mask) pairs that will be written to stats
-    weight_map = OrderedDict()
-    if self.dataset_inst.is_mc:
-        # mc weight for selected events
-        weight_map["mc_weight_selected"] = (events.mc_weight, event_mask)
-        
-    # get and store the sum of weights in the stats dictionary
-    for name, (weights, mask) in weight_map.items():
-        # Convert mask to a proper Awkward Array mask if it's Ellipsis
-        joinable_mask = mask if mask is not Ellipsis else np.ones_like(weights, dtype=bool)
-
-        # Initialize the sum entry if it does not exist
-        if f"sum_{name}" not in stats:
-            stats[f"sum_{name}"] = 0.0
-        
-        # Compute the sum of weights for the selected mask and update stats
-        stats[f"sum_{name}"] += float(ak.sum(weights[joinable_mask]))
-
-        # Initialize sums per process if it does not exist
-        if f"sum_{name}_per_process" not in stats:
-            stats[f"sum_{name}_per_process"] = defaultdict(float)
-        
-        # Sum weights per process id
-        for p in unique_process_ids:
-            # Update the sum for this specific process
-            process_mask = (events.process_id == p) & joinable_mask
-            stats[f"sum_{name}_per_process"][int(p)] += float(ak.sum(weights[process_mask]))
-    return events, results
-
-def serialize_stats(stats):
-    """
-    Converts all values in the stats dictionary to JSON serializable types.
-    """
-    serialized_stats = {}
-    for key, value in stats.items():
-        if isinstance(value, (np.int64, np.float32)):
-            serialized_stats[key] = value.item()  # Convert NumPy types to native Python types
-        elif isinstance(value, defaultdict):
-            # Convert defaultdict to a regular dictionary
-            serialized_stats[key] = {k: (v.item() if isinstance(v, (np.int64, np.float32)) else v)
-                                     for k, v in value.items()}
-        elif isinstance(value, (int, float, str)):
-            serialized_stats[key] = value  # Native Python types are already serializable
-        else:
-            serialized_stats[key] = str(value)  # Fallback for any other non-serializable types
-    return serialized_stats
 
 # exposed selectors
 # (those that can be invoked from the command line)
@@ -145,7 +69,7 @@ def serialize_stats(stats):
         double_lepton_veto, 
         match_trigobj,
         increment_stats, 
-        custom_increment_stats,
+        # custom_increment_stats,
         higgscand,
         gentau_selection,
         higgscandprod,   
@@ -172,7 +96,7 @@ def serialize_stats(stats):
         double_lepton_veto, 
         match_trigobj,
         increment_stats, 
-        custom_increment_stats,
+        # custom_increment_stats,
         higgscand,
         gentau_selection,
         higgscandprod,
@@ -277,19 +201,40 @@ def main(
                                   events.Tau[tautau_indices_pair[:,1:2]]], 
                                  axis=1)
 
-    # channel selection
-    # channel_id is now in columns
-    events, channel_results = self[get_categories](events,
-                                                   trigger_results,
-                                                   etau_indices_pair,
-                                                   mutau_indices_pair,
-                                                   tautau_indices_pair)
-    results += channel_results
 
     # make sure events have at least one lepton pair
     # hcand pair: [ [[e1,tau1]], [[mu1,tau1],[tau1,tau2]], [[e1,tau2]], [[mu1,tau2]], [] ]
     hcand_pairs = ak.concatenate([etau_pair[:,None], mutau_pair[:,None], tautau_pair[:,None]], axis=1)
 
+
+    
+    #check if there are at least two leptons with at least one tau [before trigger obj matching]
+    _lepton_indices = ak.concatenate([good_muon_indices, good_ele_indices, good_tau_indices], axis=1)
+    prematch_mask = ((ak.num(_lepton_indices, axis=1) >= 2) & (ak.num(good_tau_indices, axis=1) >= 1))
+    # hcand results
+    events, good_muon_indices, good_ele_indices, good_tau_indices, etau_channel_mask, mutau_channel_mask, tautau_channel_mask, hcand_array, hcand_results = self[higgscand](events,trigger_results,hcand_pairs,True)
+    
+    # check if there are at least two leptons with at least one tau [after trigger obj matching]
+    _lepton_indices = ak.concatenate([good_muon_indices, good_ele_indices, good_tau_indices], axis=1)
+    postmatch_mask = ((ak.num(_lepton_indices, axis=1) >= 2) & (ak.num(good_tau_indices, axis=1) >= 1))
+    match_res = SelectionResult(
+        steps = {
+            "Hcand_creation"  : prematch_mask,
+            "Hcand_Trigger_Macthing" : postmatch_mask
+        },
+    )
+    results += match_res
+    results += hcand_results
+
+    # channel selection
+    # channel_id is now in columns
+    events, channel_results = self[get_categories](events,
+                                                   trigger_results,
+                                                   etau_channel_mask,
+                                                   mutau_channel_mask,
+                                                   tautau_channel_mask)
+    results += channel_results
+    
     # extra lepton veto
     # it is only applied on the events with one higgs candidate only
     events, extra_lepton_veto_results = self[extra_lepton_veto](events,
@@ -297,28 +242,11 @@ def main(
                                                                 veto_muon_indices,
                                                                 hcand_pairs)
     results += extra_lepton_veto_results
-    
-    #check if there are at least two leptons with at least one tau [before trigger obj matching]
-    _lepton_indices = ak.concatenate([good_muon_indices, good_ele_indices, good_tau_indices], axis=1)
-    prematch_mask = ((ak.num(_lepton_indices, axis=1) >= 2) & (ak.num(good_tau_indices, axis=1) >= 1))
-    # hcand results
-    events, good_muon_indices, good_ele_indices, good_tau_indices, hcand_array, hcand_results = self[higgscand](events,trigger_results,hcand_pairs,True)
-    
-    # check if there are at least two leptons with at least one tau [after trigger obj matching]
-    _lepton_indices = ak.concatenate([good_muon_indices, good_ele_indices, good_tau_indices], axis=1)
-    postmatch_mask = ((ak.num(_lepton_indices, axis=1) >= 2) & (ak.num(good_tau_indices, axis=1) >= 1))
-    match_res = SelectionResult(
-        steps = {
-            "trigobj_prematch"  : prematch_mask,
-            "trigobj_postmatch" : postmatch_mask
-        },
-    )
-    results += match_res
-    results += hcand_results
 
-    # hcand prod results
-    events, hcandprod_results = self[higgscandprod](events, hcand_array)
-    results += hcandprod_results
+
+    # # hcand prod results
+    # events, hcandprod_results = self[higgscandprod](events, hcand_array)
+    # results += hcandprod_results
 
     # gen particles info
     # hcand-gentau match = True/False
@@ -341,10 +269,10 @@ def main(
         events = self[mc_weight](events, **kwargs)
     
     events = self[rel_charge](events, **kwargs)
-    events = self[category_ids](events, **kwargs) 
+    # events = self[category_ids](events, **kwargs) 
 
-    # rel-charge
-    events = self[rel_charge](events, **kwargs)
+    # # rel-charge
+    # events = self[rel_charge](events, **kwargs)
 
     # add cutflow features, passing per-object masks
     #events = self[cutflow_features](events, results.objects, **kwargs)
@@ -355,8 +283,10 @@ def main(
 
    
     # increment stats
+    n_evt_per_file = self.dataset_inst.n_events/self.dataset_inst.n_files
+
     weight_map = {
-        "num_events": Ellipsis,
+        "num_events": n_evt_per_file, #Ellipsis,
         "num_events_selected": event_sel,
     }
     group_map = {}
@@ -379,7 +309,6 @@ def main(
                 "mask_fn": (lambda v: events.channel_id == v),
             },
         }
-
     # stats = serialize_stats(stats)
 
     events, results = self[increment_stats](events,results,stats,weight_map=weight_map,group_map=group_map,**kwargs)
@@ -388,5 +317,82 @@ def main(
         # group_map=group_map,
         # **kwargs,
     # )
-
     return events, results
+
+
+# @selector(uses={"process_id", optional("mc_weight")}) #TODO: Move it to utils
+# def custom_increment_stats(
+#     self: Selector,
+#     events: ak.Array,
+#     results: SelectionResult,
+#     stats: dict,
+#     **kwargs,
+# ) -> ak.Array:
+#     """
+#     Unexposed selector that does not actually select objects but instead increments selection
+#     *stats* in-place based on all input *events* and the final selection *mask*.
+#     """
+#     # get event masks
+#     event_mask = results.event
+
+#     # get a list of unique process ids present in the chunk
+#     unique_process_ids = np.unique(events.process_id)
+#     # increment plain counts
+#     n_evt_per_file = self.dataset_inst.n_events/self.dataset_inst.n_files
+
+#     stats["num_events"] = n_evt_per_file
+#     if "num_events_selected" not in stats:
+#         stats["num_events_selected"] = 0
+#     stats["num_events_selected"] += float(ak.sum(event_mask, axis=0))  # Ensure th
+#     if self.dataset_inst.is_mc:
+#         stats[f"sum_mc_weight"] = n_evt_per_file
+#         stats.setdefault(f"sum_mc_weight_per_process", defaultdict(float))
+#         for p in unique_process_ids:
+#             stats[f"sum_mc_weight_per_process"][int(p)] = n_evt_per_file
+        
+#     # create a map of entry names to (weight, mask) pairs that will be written to stats
+#     weight_map = OrderedDict()
+#     if self.dataset_inst.is_mc:
+#         # mc weight for selected events
+#         weight_map["mc_weight_selected"] = (events.mc_weight, event_mask)
+        
+#     # get and store the sum of weights in the stats dictionary
+#     for name, (weights, mask) in weight_map.items():
+#         # Convert mask to a proper Awkward Array mask if it's Ellipsis
+#         joinable_mask = mask if mask is not Ellipsis else np.ones_like(weights, dtype=bool)
+
+#         # Initialize the sum entry if it does not exist
+#         if f"sum_{name}" not in stats:
+#             stats[f"sum_{name}"] = 0.0
+        
+#         # Compute the sum of weights for the selected mask and update stats
+#         stats[f"sum_{name}"] += float(ak.sum(weights[joinable_mask]))
+
+#         # Initialize sums per process if it does not exist
+#         if f"sum_{name}_per_process" not in stats:
+#             stats[f"sum_{name}_per_process"] = defaultdict(float)
+        
+#         # Sum weights per process id
+#         for p in unique_process_ids:
+#             # Update the sum for this specific process
+#             process_mask = (events.process_id == p) & joinable_mask
+#             stats[f"sum_{name}_per_process"][int(p)] += float(ak.sum(weights[process_mask]))
+#     return events, results
+
+# def serialize_stats(stats):
+#     """
+#     Converts all values in the stats dictionary to JSON serializable types.
+#     """
+#     serialized_stats = {}
+#     for key, value in stats.items():
+#         if isinstance(value, (np.int64, np.float32)):
+#             serialized_stats[key] = value.item()  # Convert NumPy types to native Python types
+#         elif isinstance(value, defaultdict):
+#             # Convert defaultdict to a regular dictionary
+#             serialized_stats[key] = {k: (v.item() if isinstance(v, (np.int64, np.float32)) else v)
+#                                      for k, v in value.items()}
+#         elif isinstance(value, (int, float, str)):
+#             serialized_stats[key] = value  # Native Python types are already serializable
+#         else:
+#             serialized_stats[key] = str(value)  # Fallback for any other non-serializable types
+#     return serialized_stats

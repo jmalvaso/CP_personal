@@ -65,13 +65,13 @@ def hcand_features(
     events = set_ak_column(events, "hcand_invm", mass)
     events = set_ak_column(events, "hcand_dr",   dr)
 
-    events, P4_dict     = self[reArrangeDecayProducts](events)
-    events              = self[ProduceDetPhiCP](events, P4_dict)
+    # events, P4_dict     = self[reArrangeDecayProducts](events)
+    # events              = self[ProduceDetPhiCP](events, P4_dict)
 
-    if "is_signal" in list(self.dataset_inst.aux.keys()):
-        if self.dataset_inst.aux["is_signal"]:
-            events, P4_gen_dict = self[reArrangeGenDecayProducts](events)
-            events = self[ProduceGenPhiCP](events, P4_gen_dict)
+    # if "is_signal" in list(self.dataset_inst.aux.keys()):
+    #     if self.dataset_inst.aux["is_signal"]:
+    #         events, P4_gen_dict = self[reArrangeGenDecayProducts](events)
+    #         events = self[ProduceGenPhiCP](events, P4_gen_dict)
     
     return events
 
@@ -79,7 +79,7 @@ def hcand_features(
 @producer(
     uses={
         normalization_weights,
-        # split_dy,
+        split_dy,
         pu_weight,
         muon_weight,
         tau_weight,
@@ -89,7 +89,7 @@ def hcand_features(
     },
     produces={
         normalization_weights,
-        # split_dy,
+        split_dy,
         pu_weight,
         muon_weight,
         get_mc_weight,
@@ -101,13 +101,13 @@ def hcand_features(
 def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
 
     if self.dataset_inst.is_mc:
-        #events = self[get_mc_weight](events, **kwargs)
+        events = self[get_mc_weight](events, **kwargs)
         print("Producing Normalization weights...")
         events = self[normalization_weights](events, **kwargs)
         processes = self.dataset_inst.processes.names()
-        # if ak.any(['dy' in proc for proc in processes]):
-        #     print("Splitting Drell-Yan dataset...")
-        #     events = self[split_dy](events,**kwargs)
+        if ak.any(['dy' in proc for proc in processes]):
+            print("Splitting Drell-Yan dataset...")
+            events = self[split_dy](events,**kwargs)
         print("Producing PU weights...")
         events = self[pu_weight](events, **kwargs)
         print("Producing Muon weights...")

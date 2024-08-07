@@ -38,8 +38,20 @@ case $1 in
     "run3_data")
         config="run3_2022_preEE_nano_tau_v12"
         #Datasets to use
-        datasets="data_mu,data_mu_D"
-        processes="data"
+        datasets="data_mu_C,data_mu_D"
+        processes="data_mu"
+    ;;
+    "run3_data_mu_lim")
+        config="run3_2022_preEE_nano_tau_v12_limited"
+        #Datasets to use
+        datasets="data_mu_C,data_mu_D"
+        processes="data_mu"
+    ;;
+    "run3_data_e_lim")
+        config="run3_2022_preEE_nano_tau_v12_limited"
+        #Datasets to use
+        datasets="data_e_C,data_e_D"
+        processes="data_e"
     ;;
     "run3_DY")
     config="run3_2022_preEE_nano_tau_v12"
@@ -47,10 +59,34 @@ case $1 in
     datasets="dy_incl"
     processes="dy_lep" #dy_z2tautau,dy_z2mumu,dy_z2ee
     ;;
+    "run3_DY_lim")
+    config="run3_2022_preEE_nano_tau_v12_limited"
+    #Datasets to use
+    datasets="dy_incl"
+    processes="dy_z2mumu,dy_z2ee,dy_z2ll"
+    ;;
+    "run3_DY_tautau_lim")
+    config="run3_2022_preEE_nano_tau_v12_limited"
+    #Datasets to use
+    datasets="dy_incl"
+    processes="dy_z2tautau"
+    ;;
+    "run3_DY_mumu_lim")
+    config="run3_2022_preEE_nano_tau_v12_limited"
+    #Datasets to use
+    datasets="dy_incl"
+    processes="dy_z2mumu"
+    ;;
+    "run3_DY_ee_lim")
+    config="run3_2022_preEE_nano_tau_v12_limited"
+    #Datasets to use
+    datasets="dy_incl"
+    processes="dy_z2ee"
+    ;;
     "run3_data_dy_wj_vv_tt_st")
     config="run3_2022_preEE_nano_tau_v12"
     #Datasets to use
-    datasets="data_mu_C,data_mu_D,dy_incl,wj_incl,ww,zz,wz,tt_dl,st_tchannel_t,st_tchannel_tbar,st_twchannel_t_sl,st_twchannel_tbar_sl,st_twchannel_t_dl,st_twchannel_tbar_dl,st_twchannel_tbar_fh"
+    datasets="data_mu_C,data_mu_D,data_e_C,data_e_D,dy_incl,wj_incl,ww,zz,wz,tt_dl,st_tchannel_t,st_tchannel_tbar,st_twchannel_t_sl,st_twchannel_tbar_sl,st_twchannel_t_dl,st_twchannel_tbar_dl,st_twchannel_tbar_fh"
     processes="st,tt_dl,vv,dy_lep,wj,data"
     ;; 
     "run3_wj")

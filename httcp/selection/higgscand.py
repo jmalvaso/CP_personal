@@ -18,8 +18,9 @@ coffea = maybe_import("coffea")
 
 
 @selector(
-    uses={
-        "channel_id",
+    produces={
+        "hcand.pt", "hcand.eta", "hcand.phi", "hcand.mass", "hcand.charge", "hcand.rawIdx", "hcand.decayMode",
+        #"hcand.IPx", "hcand.IPy", "hcand.IPz",
     },
     exposed=False,
 )
@@ -149,29 +150,33 @@ def higgscand(
     
     
     
-    sel_hcand = ak.sum(ak.num(hcand_pair.pt, axis=-1), axis=1) == 2
+    # sel_hcand = ak.sum(ak.num(hcand_pair.pt, axis=-1), axis=1) == 2
     
     #channel_id 1,2,4 etau,mutau,tautau
     empty_hcand_pair = hcand_pair[:,:0][:,None]
-    etau_channel_mask =  (events.channel_id == 1) & (single_electron_triggered | cross_electron_triggered)
-    mutau_channel_mask =  (events.channel_id == 2) & (single_muon_triggered | cross_muon_triggered)
-    tautau_channel_mask =  (events.channel_id == 4) & (cross_tau_triggered)
-    hcand_pair_concat = ak.where(etau_channel_mask, hcand_pair[:,0][:,None], empty_hcand_pair)
-    hcand_pair_concat = ak.where(mutau_channel_mask, hcand_pair[:,1][:,None], hcand_pair_concat)
-    hcand_pair_concat = ak.where(tautau_channel_mask, hcand_pair[:,2][:,None], hcand_pair_concat)
+    etau_channel_mask = (single_electron_triggered | cross_electron_triggered)
+    mutau_channel_mask = (single_muon_triggered | cross_muon_triggered)
+    tautau_channel_mask = (cross_tau_triggered)
     
-    #channel_id 3,5,6 etau_mutau,etau_tautau,mutau_tautau 
-    hcand_pair_concat = ak.where(events.channel_id == 3, 
-                                 ak.concatenate([hcand_pair[:,0][:,None], hcand_pair[:,1][:,None]], axis=1),
-                                 hcand_pair_concat)
-    hcand_pair_concat = ak.where(events.channel_id == 5,
-                                 ak.concatenate([hcand_pair[:,0][:,None], hcand_pair[:,2][:,None]], axis=1),
-                                 hcand_pair_concat)
-    hcand_pair_concat = ak.where(events.channel_id == 6, 
-                                 ak.concatenate([hcand_pair[:,1][:,None], hcand_pair[:,2][:,None]], axis=1),
-                                 hcand_pair_concat)
+    hcand_pair_etau   = ak.where(etau_channel_mask, hcand_pair[:,0][:,None], empty_hcand_pair)
+    hcand_pair_mutau  = ak.where(mutau_channel_mask, hcand_pair[:,1][:,None], empty_hcand_pair)
+    hcand_pair_tautau = ak.where(tautau_channel_mask, hcand_pair[:,2][:,None], empty_hcand_pair)
     
-    hcand_array = enforce_hcand_type(hcand_pair_concat, 
+    
+    hcand_array = ak.concatenate([hcand_pair_etau, hcand_pair_mutau, hcand_pair_tautau], axis=1)
+    
+    # #channel_id 3,5,6 etau_mutau,etau_tautau,mutau_tautau 
+    # hcand_pair_concat = ak.where(events.channel_id == 3, 
+    #                              ak.concatenate([hcand_pair[:,0][:,None], hcand_pair[:,1][:,None]], axis=1),
+    #                              hcand_pair_concat)
+    # hcand_pair_concat = ak.where(events.channel_id == 5,
+    #                              ak.concatenate([hcand_pair[:,0][:,None], hcand_pair[:,2][:,None]], axis=1),
+    #                              hcand_pair_concat)
+    # hcand_pair_concat = ak.where(events.channel_id == 6, 
+    #                              ak.concatenate([hcand_pair[:,1][:,None], hcand_pair[:,2][:,None]], axis=1),
+    #                              hcand_pair_concat)
+
+    hcand_array_type_fix = enforce_hcand_type(hcand_array, 
                                      {"pt"            : "float64",
                                       "eta"           : "float64",
                                       "phi"           : "float64",
@@ -182,24 +187,51 @@ def higgscand(
                                       #"IPx"           : "float64",
                                       #"IPy"           : "float64",
                                       #"IPz"           : "float64"
-                                  }
-    )
-
-    electron = ak.where(hcand_array.decayMode == -1, hcand_array.rawIdx, -1)
-    muon = ak.where(hcand_array.decayMode == -2, hcand_array.rawIdx, -1)
-    tau = ak.where(hcand_array.decayMode >= 0, hcand_array.rawIdx, -1)
-    hcand_electron_indices = ak.flatten(electron[electron>=0],axis=-1)
-    hcand_muon_indices = ak.flatten(muon[muon>=0],axis=-1)
-    hcand_tau_indices = ak.flatten(tau[tau>=0],axis=-1)
+                                       })
+        
     
-    hcand_electron_indices = ak.values_astype(hcand_electron_indices,np.int32)
-    hcand_muon_indices = ak.values_astype(hcand_muon_indices,np.int32)
-    hcand_tau_indices = ak.values_astype(hcand_tau_indices,np.int32)
+    #Extraction of the indices from Hcand_pair after matching
+    etau_objects_idx = hcand_array_type_fix[:,0].rawIdx
+    etau_e_idx = etau_objects_idx[:,0:1]
+    etau_tau_idx = etau_objects_idx[:,1:2]
     
-    sel_hcand = ak.fill_none(ak.num(ak.firsts(hcand_array.pt, axis=1), axis=1) == 2, False)
+    mutau_objects = hcand_array_type_fix[:,1].rawIdx
+    mutau_mu_idx = mutau_objects[:,0:1]
+    mutau_tau_idx = mutau_objects[:,1:2]
+    
+    tautau_objects = hcand_array_type_fix[:,2].rawIdx
+    tautau_tau1_idx = tautau_objects[:,0:1]
+    tautau_tau2_idx = tautau_objects[:,1:2]
+    
+    tau_indices =  ak.concatenate([etau_tau_idx,mutau_tau_idx,tautau_tau1_idx,tautau_tau2_idx],axis=1)
+    
+    
+    ########################################################################
+    # Custom function to remove duplicates while preserving order
+    def remove_duplicates(array):
+        return ak.Array([list(dict.fromkeys(subarray)) for subarray in array])
 
+    # This is not the proper way to make sure that we are not double counting taus,
+    #    but it works, even though it is very slow
+    unique_tau_indices = remove_duplicates(tau_indices)
+    ########################################################################
+    
+    hcand_electron_indices = ak.values_astype(etau_e_idx,np.int64)
+    hcand_muon_indices = ak.values_astype(mutau_mu_idx,np.int64)
+    hcand_tau_indices = ak.values_astype(unique_tau_indices,np.int64)
+    
+    sel_hcand = ak.sum(ak.num(hcand_array_type_fix,axis=2),axis=1) == 2
+    
+    empty_hcand_array = hcand_array_type_fix[:,:0]
+    
+    hcand_array_skim = ak.where(sel_hcand,hcand_array_type_fix,empty_hcand_array)
+     
+    hcand_array_One_Higgs_cand = ak.flatten(hcand_array_skim,axis=2)
 
-    return events,hcand_muon_indices, hcand_electron_indices,hcand_tau_indices,hcand_array, SelectionResult(
+    
+    events = set_ak_column(events, "hcand", hcand_array_One_Higgs_cand)
+
+    return events,hcand_muon_indices,hcand_electron_indices,hcand_tau_indices,etau_channel_mask,mutau_channel_mask,tautau_channel_mask,hcand_array_One_Higgs_cand, SelectionResult(
         steps={
             "One_higgs_cand_per_event": sel_hcand,
         },
@@ -216,7 +248,7 @@ def higgscand(
         },
     )
 
-
+#########################################################################################################
 def select_tauprods(hcand_idx, tauprods):
     hcand_idx_brdcst, tauprod_tauIdx = ak.broadcast_arrays(ak.firsts(hcand_idx,axis=1), tauprods.tauIdx)
     hcandprod_mask                   = tauprod_tauIdx == hcand_idx_brdcst
@@ -292,16 +324,22 @@ def higgscandprod(
         hcand_array: ak.Array,
         **kwargs
 ) -> tuple[ak.Array, SelectionResult]:
+    
+    One_higgs_cand = ak.num(hcand_array,axis=-1) == 2
     etau_id   = self.config_inst.get_channel("etau").id
     mutau_id  = self.config_inst.get_channel("mutau").id
     tautau_id = self.config_inst.get_channel("tautau").id
 
     events   = self[assign_tauprod_mass_charge](events)
 
-    tauprods = events.TauProd
-    hcand    = hcand_array #events.hcand
-    hcand1 = ak.firsts(hcand[:,:,0:1], axis=1)
-    hcand2 = ak.firsts(hcand[:,:,1:2], axis=1)
+    tauprods = events.TauProd[One_higgs_cand]
+    hcand = hcand_array[:,0]
+    hcand =  hcand[One_higgs_cand]
+    
+    hcand1 = hcand[:,0:1]
+    hcand2 = hcand[:,1:2]
+    # hcand1 = ak.firsts(hcand[:,:,0:1], axis=1)
+    # hcand2 = ak.firsts(hcand[:,:,1:2], axis=1)
     hcand_concat = ak.concatenate([hcand1, hcand2], axis=1)
     
     
@@ -315,7 +353,7 @@ def higgscandprod(
                            select_tauprods(hcand2_idx, tauprods),
                            tauprods[:,:0])
 
-    dummy = (events.event >= 0)[:,None]
+    dummy = (events.event >= 0)[:,np.newaxis]
     hcand1_mask = ak.where(hcand1.decayMode == 0,
                            (has_one_pion(hcand1prods) & has_no_photons(hcand1prods)),
                            ak.where(((hcand1.decayMode == 1) | (hcand1.decayMode == 2)),
@@ -343,7 +381,7 @@ def higgscandprod(
     
     hcand_prod_mask = ak.concatenate([hcand1_mask, hcand2_mask], axis=1)
     
-    hcand_prods = ak.concatenate([hcand1prods[:,None], hcand2prods[:,None]], axis=1)
+    hcand_prods = ak.concatenate([hcand1prods[:, np.newaxis], hcand2prods[:, np.newaxis]], axis=1)
 
     # hcand_prods_array = enforce_hcand_type(ak.from_regular(hcand_prods),
     #                                        {"pt"            : "float64",
@@ -367,3 +405,4 @@ def higgscandprod(
             "has_proper_tau_decay_products": ak.sum(hcand_prod_mask, axis=1) == 2,
         },
     )
+#########################################################################################################

@@ -1,3 +1,4 @@
+# . $CF_BASE/sandboxes/venv_columnar_dev.sh
 import matplotlib.pyplot as plt
 import mplhep
 import pickle
@@ -45,9 +46,9 @@ def create_cutflow_histogram(cuts, data, xlabel="Selections", ylabel="Selection 
             x = cuts
             y = n_evt
         print(f'Event numbers:')
-        # ax.step(x, y , color=color[i], where='mid',marker='o', linewidth=1.2, alpha=0.8, label=r"Z $\rightarrow \ell \ell$")
-        #ax.step(x, y , color=color[i], where='mid',marker='o', linewidth=1.2, alpha=0.8, label=r"W $\rightarrow \ell \nu$")
-        ax.step(x, y , color=color[i], where='mid',marker='o', linewidth=1.2, alpha=0.8, label=r"Data")
+        ax.step(x, y , color=color[i], where='mid',marker='o', linewidth=1.2, alpha=0.8, label=r"Z $\rightarrow \ell \ell$")
+        # ax.step(x, y , color=color[i], where='mid',marker='o', linewidth=1.2, alpha=0.8, label=r"W $\rightarrow \ell \nu$")
+        #ax.step(x, y , color=color[i], where='mid',marker='o', linewidth=1.2, alpha=0.8, label=r"Data")
         for i, txt in enumerate(y):
             the_txt = f'{txt:.4f}' if rel else f'{txt:.0f}'
             ax.annotate(the_txt, (x[i], y[i]),
@@ -123,16 +124,17 @@ def get_hist_values(pickle_file):
 
 
 #DY
+path22 = "/afs/cern.ch/user/j/jmalvaso/CP_personal/data/cf_store/analysis_httcp/cf.CreateCutflowHistograms/run3_2022_preEE_nano_tau_v12_limited/dy_incl/nominal/calib__main/sel__main__steps_trigger_met_filter_b_veto_dilepton_veto_Hcand_creation_Hcand_Trigger_Macthing_One_higgs_cand_per_event_extra_lepton_veto_has_proper_tau_decay_products/dev/cutflow_hist__event.pickle"
 # path22 = "/afs/cern.ch/user/j/jmalvaso/CP_personal/data/cf_store/analysis_httcp/cf.CreateCutflowHistograms/run3_2022_preEE_nano_tau_v12/dy_incl/nominal/calib__main/sel__main__steps_trigger_met_filter_b_veto_dilepton_veto_extra_lepton_veto_trigobj_prematch_trigobj_postmatch_One_higgs_cand_per_event_has_proper_tau_decay_products/dev/cutflow_hist__event.pickle"
 #WJ
 #path22 = "/afs/cern.ch/user/j/jmalvaso/CP_personal/data/cf_store/analysis_httcp/cf.CreateCutflowHistograms/run3_2022_preEE_nano_tau_v12/wj_incl/nominal/calib__main/sel__main__steps_trigger_met_filter_b_veto_dilepton_veto_extra_lepton_veto_trigobj_prematch_trigobj_postmatch_One_higgs_cand_per_event_has_proper_tau_decay_products/dev/cutflow_hist__event.pickle"
 #Data
-path22 = "/afs/cern.ch/user/j/jmalvaso/CP_personal/data/cf_store/analysis_httcp/cf.CreateCutflowHistograms/run3_2022_preEE_nano_tau_v12/data_mu_D/nominal/calib__main/sel__main__steps_trigger_met_filter_b_veto_dilepton_veto_extra_lepton_veto_trigobj_prematch_trigobj_postmatch_One_higgs_cand_per_event_has_proper_tau_decay_products/dev/cutflow_hist__event.pickle"
+#path22 = "/afs/cern.ch/user/j/jmalvaso/CP_personal/data/cf_store/analysis_httcp/cf.CreateCutflowHistograms/run3_2022_preEE_nano_tau_v12/data_mu_D/nominal/calib__main/sel__main__steps_trigger_met_filter_b_veto_dilepton_veto_extra_lepton_veto_trigobj_prematch_trigobj_postmatch_One_higgs_cand_per_event_has_proper_tau_decay_products/dev/cutflow_hist__event.pickle"
 cuts, values22 = get_hist_values(path22)
 
 create_cutflow_histogram(cuts, 
                          data={"2022 preEE": values22},
-                         save_path="cutflow_histogram_2022_preEE_Data.png",
+                         save_path="cutflow_histogram_2022_preEE_DY_lim.png",
                          ylabel="N evt",
                          log=True,
                          rel=False)

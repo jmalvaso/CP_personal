@@ -40,11 +40,14 @@ def add_run3_preEE(ana: od.Analysis,
     # add processes we are interested in
     process_names = [
         "data",
+        "data_mu",
+        "data_e",
         #Drell-Yan
         "dy_lep",
         "dy_z2ee",
         "dy_z2mumu",
         "dy_z2tautau",
+        "dy_z2ll",
         #W + jets
         "wj",
         #diboson
@@ -103,6 +106,8 @@ def add_run3_preEE(ana: od.Analysis,
     # add datasets we need to study
     dataset_names = [
         #data
+        "data_e_C",
+        "data_e_D",
         "data_mu_C",
         "data_mu_D",
         #Drell-Yan

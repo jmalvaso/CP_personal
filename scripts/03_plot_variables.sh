@@ -6,7 +6,7 @@ args=(
         --config $config
         --processes $processes
         --version $version
-        --categories mutau
+        --categories incl,mutau,etau
         --variables tau_1_pt,hcand_mass
         --general-settings "cms-label=pw"
         "${@:2}"
