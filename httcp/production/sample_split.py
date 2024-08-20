@@ -35,15 +35,16 @@ def split_dy(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     # hcand_Tau_idx = events.hcand.rawIdx[:,1:2]
     # mask_hcand_tau_idx = ak.flatten(hcand_Tau_idx)
     match = events.Tau.genPartFlav
-    mu2tau_fakes_mask = ((match == tau_part_flav["prompt_mu"]) | (match == tau_part_flav["tau->mu"])) 
-    e2tau_fakes_mask = ((match == tau_part_flav["prompt_e"]) | (match == tau_part_flav["tau->e"]))
-    genuine_tau_mask = (match == tau_part_flav["tau_had"])
+    #### The ak.any() is a nasty fix that need to be removed, we have tautau that needs to be taken into account properly
+    mu2tau_fakes_mask = ak.any(((match == tau_part_flav["prompt_mu"]) | (match == tau_part_flav["tau->mu"])),axis=1)
+    e2tau_fakes_mask = ak.any(((match == tau_part_flav["prompt_e"]) | (match == tau_part_flav["tau->e"])),axis=1)
+    genuine_tau_mask = ak.any((match == tau_part_flav["tau_had"]),axis=1)
     process_id = np.array(events.process_id,dtype=np.int64)
     # np.array(events.process_id,dtype=np.int64)*ak.ones_like(events.process_id)
     process_id = ak.where((mu2tau_fakes_mask & (hcand_ele_mu_DM == -2)), 51001, 51004)
     process_id = ak.where((e2tau_fakes_mask & (hcand_ele_mu_DM == -1)), 51003, process_id)
     events = remove_ak_column(events, "process_id")
-    events = set_ak_column(events, "process_id", process_id, value_type=np.int32)
+    events = set_ak_column(events, "process_id", process_id, value_type=np.int64)
     return events
 
 

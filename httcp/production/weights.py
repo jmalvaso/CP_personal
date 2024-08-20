@@ -169,6 +169,81 @@ def muon_weight_setup(
    
     self.muon_sf = correction_set["NUM_MediumID_DEN_TrackerMuons"]
 
+# ### ELECTRON WEIGHT CALCULATOR ###
+
+
+# @producer(
+#     uses={
+#         f"hcand.{var}" for var in [
+#                 "pt","eta","phi","mass", "charge", 
+#                 "decayMode", "rawIdx"
+#             ]
+#     },
+#     produces={
+#          f"electron_weight_{shift}"
+#         for shift in ["nom", "up", "down"]
+#     },
+#     mc_only=True,
+# )
+# def electron_weight(self: Producer, events: ak.Array, do_syst: bool,  **kwargs) -> ak.Array:
+#     shifts = ["nominal"]
+#     if do_syst: shifts=[*shifts,"systup", "systdown"] 
+    
+#     rename_systs = {"nominal" : "nom",
+#                     "systup"  : "up",
+#                     "systdown": "down"
+#     }
+#     etau_id  = self.config_inst.get_channel("etau").id
+#     #Get mask for etau channel
+#     is_etau = events.channel_id == etau_id
+    
+#     #Create an instance of scale factor to make copies from
+    
+#     # Create sf array template to make copies and dict for finnal results of all systematics
+#     pt =  flat_np_view(events.hcand.pt[:,:1],axis=1) #take the first particle from the hcand pair
+#     eta =  flat_np_view(events.hcand.eta[:,:1],axis=1)
+#     _sf = np.ones_like(pt, dtype=np.float32)
+#     sf_values = {}
+
+#     #Check if the input electron array is flat. Well it should be
+#     if len(pt) != len(events) : raise TypeError('Found multiple H candidates in some of the events: check hcand array')
+    
+#     #Prepare a tuple with the inputs of the correction evaluator
+#     e_sf_args = lambda syst : (eta[is_etau],
+#                                 pt[is_etau],
+#                                 syst)
+#     #Loop over the shifts and calculate for each shift electron scale factor
+#     for the_shift in shifts:
+#         sf_values[the_shift] = _sf.copy()
+#         sf_values[the_shift][is_etau] = self.electron_sf.evaluate(*e_sf_args(the_shift))
+        
+#         events = set_ak_column_f32(events, f"electron_weight_{rename_systs[the_shift]}", sf_values[the_shift])
+#     return events
+
+# @electron_weight.requires
+# def electron_weight_requires(self: Producer, reqs: dict) -> None:
+#     if "external_files" in reqs:
+#         return
+    
+#     from columnflow.tasks.external import BundleExternalFiles
+#     reqs["external_files"] = BundleExternalFiles.req(self.task)
+
+# @electron_weight.setup
+# def electron_weight_setup(
+#     self: Producer,
+#     reqs: dict,
+#     inputs: dict,
+#     reader_targets: InsertableDict,
+# ) -> None:
+#     bundle = reqs["external_files"]
+#     import correctionlib
+#     correctionlib.highlevel.Correction.__call__ = correctionlib.highlevel.Correction.evaluate
+    
+#     correction_set = correctionlib.CorrectionSet.from_string(
+#         bundle.files.electron_correction.load(formatter="gzip").decode("utf-8"),
+#     )
+   
+#     self.electron_sf = correction_set["NUM_MediumID_DEN_Trackerelectrons"] #FIX_ME
 
 ### TAU WEIGHT CALCULATOR ###
 

@@ -28,6 +28,7 @@ from httcp.selection.trigger import trigger_selection
 from httcp.selection.lepton_pair_etau import etau_selection
 from httcp.selection.lepton_pair_mutau import mutau_selection
 from httcp.selection.lepton_pair_tautau import tautau_selection
+from httcp.selection.lepton_pair_emu import emu_selection
 from httcp.selection.event_category import get_categories
 from httcp.selection.match_trigobj import match_trigobj
 from httcp.selection.lepton_veto import double_lepton_veto,extra_lepton_veto
@@ -35,7 +36,7 @@ from httcp.selection.higgscand import higgscand, higgscandprod
 
 from columnflow.production.categories import category_ids
 
-#from httcp.production.main import cutflow_features
+##from httcp.production.main import cutflow_features
 from httcp.production.dilepton_features import rel_charge #TODO: rename mutau_vars -> dilepton_vars
 
 
@@ -160,10 +161,10 @@ def main(
 
 
     # double lepton veto
-    events, extra_double_lepton_veto_results = self[double_lepton_veto](events,
+    events, double_lepton_veto_results = self[double_lepton_veto](events,
                                                                         dlveto_ele_indices,
                                                                         dlveto_muon_indices)
-    results += extra_double_lepton_veto_results
+    results += double_lepton_veto_results
     
     # e-tau pair i.e. hcand selection
     # e.g. [ [], [e1, tau1], [], [], [e1, tau2] ]
@@ -201,6 +202,17 @@ def main(
                                   events.Tau[tautau_indices_pair[:,1:2]]], 
                                  axis=1)
 
+    # # e-mu pair i.e. hcand selection
+    # # e.g. [ [], [e1, mu2], [], [], [] ]
+    # emu_results, emu_indices_pair = self[emu_selection](events,
+    #                                                        good_ele_indices,
+    #                                                        good_mu_indices,
+    #                                                        call_force=True,
+    #                                                        **kwargs)
+    # results += emu_results
+    # emu_pair = ak.concatenate([events.Electron[emu_indices_pair[:,0:1]],
+    #                             events.Muon[emu_indices_pair[:,1:2]]],
+    #                            axis=1)
 
     # make sure events have at least one lepton pair
     # hcand pair: [ [[e1,tau1]], [[mu1,tau1],[tau1,tau2]], [[e1,tau2]], [[mu1,tau2]], [] ]
@@ -239,10 +251,13 @@ def main(
     # it is only applied on the events with one higgs candidate only
     events, extra_lepton_veto_results = self[extra_lepton_veto](events,
                                                                 veto_ele_indices,
-                                                                veto_muon_indices,
-                                                                hcand_pairs)
+                                                                veto_muon_indices)
     results += extra_lepton_veto_results
 
+    # and_selections = results.steps["trigger"]
+    # for key in results.steps.keys():
+    #     and_selections = and_selections & results.steps[key]
+    #     print(key, ak.sum(results.steps[key]))
 
     # # hcand prod results
     # events, hcandprod_results = self[higgscandprod](events, hcand_array)
@@ -270,9 +285,7 @@ def main(
     
     events = self[rel_charge](events, **kwargs)
     # events = self[category_ids](events, **kwargs) 
-
-    # # rel-charge
-    # events = self[rel_charge](events, **kwargs)
+    print("Pair relative charge production successfully completed")
 
     # add cutflow features, passing per-object masks
     #events = self[cutflow_features](events, results.objects, **kwargs)
@@ -280,13 +293,11 @@ def main(
     events = self[process_ids](events, **kwargs)
     events = self[category_ids](events, **kwargs)     
 
-
-   
     # increment stats
-    n_evt_per_file = self.dataset_inst.n_events/self.dataset_inst.n_files
+    #n_evt_per_file = self.dataset_inst.n_events/self.dataset_inst.n_files
 
     weight_map = {
-        "num_events": n_evt_per_file, #Ellipsis,
+        "num_events": Ellipsis, #Ellipsis,
         "num_events_selected": event_sel,
     }
     group_map = {}
@@ -312,11 +323,7 @@ def main(
     # stats = serialize_stats(stats)
 
     events, results = self[increment_stats](events,results,stats,weight_map=weight_map,group_map=group_map,**kwargs)
-    # events, results = self[increment_stats]( 
-        # weight_map=weight_map,
-        # group_map=group_map,
-        # **kwargs,
-    # )
+    
     return events, results
 
 

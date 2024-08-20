@@ -101,6 +101,7 @@ def get_sorted_pair(
         "Muon.pt", "Muon.eta", "Muon.phi", "Muon.mass",
         "Muon.charge", "Muon.pfRelIso03_all",
         "PuppiMET.pt", "PuppiMET.phi",
+        #"Tau.idDeepTau2018v2p5VSjet", "Tau.idDeepTau2018v2p5VSe", "Tau.idDeepTau2018v2p5VSmu",
     },
     exposed=False,
 )

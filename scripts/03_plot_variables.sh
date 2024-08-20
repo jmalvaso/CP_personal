@@ -4,12 +4,15 @@ source ./common.sh #to access set_common_vars() function
 set_common_vars "$1"
 args=(
         --config $config
+        --datasets $datasets
         --processes $processes
         --version $version
-        --categories incl,mutau,etau
-        --variables tau_1_pt,hcand_mass
+        --categories incl,mutau,etau,
+        --variables hcand_mass,tau_1_phi,tau_1_eta,electron_1_pt,electron_1_phi,electron_1_eta,muon_1_pt,muon_1_phi,muon_1_eta
         --general-settings "cms-label=pw"
         "${@:2}"
     )
 echo law run cf.PlotVariables1D "${args[@]}"
 law run cf.PlotVariables1D "${args[@]}"
+
+# tau_1_phi,tau_1_eta,electron_1_pt,electron_1_phi,electron_1_eta,muon_1_pt,muon_1_phi,muon_1_eta,

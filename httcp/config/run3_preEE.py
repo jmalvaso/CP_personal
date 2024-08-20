@@ -46,8 +46,9 @@ def add_run3_preEE(ana: od.Analysis,
         "dy_lep",
         "dy_z2ee",
         "dy_z2mumu",
-        "dy_z2tautau",
+        # "dy_z2tautau",
         "dy_z2ll",
+        # "dy_lep_m10to50",
         #W + jets
         "wj",
         #diboson
@@ -71,7 +72,7 @@ def add_run3_preEE(ana: od.Analysis,
         "st_twchannel_t_dl",
         "st_twchannel_tbar_dl",
         # "st_twchannel_t_fh",
-        "st_twchannel_tbar_fh",
+        #"st_twchannel_tbar_fh",
         # signal
         "h_ggf_tautau"
     ]
@@ -112,6 +113,7 @@ def add_run3_preEE(ana: od.Analysis,
         "data_mu_D",
         #Drell-Yan
         "dy_incl",
+        # "dy_lep_m10to50",
         #W+jets
         "wj_incl",
         #Diboson
@@ -131,7 +133,7 @@ def add_run3_preEE(ana: od.Analysis,
         "st_twchannel_t_dl",
         "st_twchannel_tbar_dl",
         # "st_twchannel_t_fh",
-        "st_twchannel_tbar_fh",
+        # "st_twchannel_tbar_fh",
         # signal
         "signal"
         ]
@@ -170,7 +172,7 @@ def add_run3_preEE(ana: od.Analysis,
     cfg.x.process_groups = {
         "diboson": ["ww", "wz", "zz"],
         "tt" : ["tt_sl","tt_dl","tt_fh"],
-        "st" : ["st_tchannel_t","st_tchannel_tbar","st_twchannel_t_sl","st_twchannel_tbar_sl","st_twchannel_t_dl","st_twchannel_tbar_dl","st_twchannel_tbar_fh"]
+        "st" : ["st_tchannel_t","st_tchannel_tbar","st_twchannel_t_sl","st_twchannel_tbar_sl","st_twchannel_t_dl","st_twchannel_tbar_dl"]
     }
 
     # dataset groups for conveniently looping over certain datasets
@@ -306,7 +308,7 @@ def add_run3_preEE(ana: od.Analysis,
     cfg.x.event_weights = DotDict({
         "normalization_weight"  : [],
         "pu_weight"             : [],
-        # "electron_weight"       : [],
+        #"electron_weight_nom"       : [],
         "muon_weight_nom"           : [],
         "tau_weight_nom"             : [],
     })
@@ -332,6 +334,7 @@ def add_run3_preEE(ana: od.Analysis,
     # channels
     cfg.add_channel(name="etau",   id=1)
     cfg.add_channel(name="mutau",  id=2)
+    #cfg.add_channel(name="emu"  ,  id=3)
     cfg.add_channel(name="tautau", id=4)
     
     if cfg.campaign.x("custom").get("creator") == "desy":  

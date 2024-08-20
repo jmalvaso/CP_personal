@@ -50,8 +50,8 @@ def trigger_object_matching(
     # delta_r for all combinations
     dr = vectors1.metric_table(vectors2)
     # check per element in vectors1 if there is at least one matching element in vectors2
-    any_match = ak.any(dr < threshold, axis=axis)
-
+    any_match = (dr < threshold)
+    #ak.any(, axis=axis)
     return any_match
 
 def hlt_path_fired(dictionary):
@@ -125,4 +125,152 @@ def enforce_hcand_type(hcand_pair_concat, field_type_dict):
         temp[field] = ak.enforce_type(ak.values_astype(hcand_pair_concat[field], typename), f"var * var * {typename}")
     hcand_array = ak.zip(temp)
     return hcand_array
+
+
+# def enforce_hcand_type(hcand_array, field_type_dict):
+#     temp = {}
     
+#     for field, typename in field_type_dict.items():
+#         # Extract the field from the collection
+#         field_data = hcand_array[field]
+
+#         # Handle empty lists by filling them with a default value
+#         if 'float' in typename:
+#             default_value = 0.0
+#         elif 'int' in typename:
+#             default_value = 0
+#         else:
+#             raise ValueError(f"Unsupported type: {typename}")
+        
+#         # Fill empty lists with the default value
+#         filled_data = ak.fill_none(field_data, default_value, axis=-1)
+        
+#         # If the data is deeply nested, consider flattening
+#         if isinstance(ak.type(filled_data), ak.types.ListType):
+#             try:
+#                 enforced_field = ak.enforce_type(ak.values_astype(filled_data, typename), f"var * {typename}")
+#             except Exception as e:
+#                 print(f"Failed to enforce type for {field}: {e}")
+#                 enforced_field = filled_data  # Fallback to the filled data without enforcing
+#         else:
+#             enforced_field = ak.values_astype(filled_data, typename)
+        
+#         # Store the enforced field back in the temp dictionary
+#         temp[field] = enforced_field
+    
+#     # Zip the fields back into a NanoCollection-like structure
+#     hcand_array = ak.zip(temp)
+    
+#     return hcand_array
+
+
+    
+def enforce_tauprods_type(tauprods, field_type_dict):
+    temp = {}
+    
+    # Iterate over each field and apply type enforcement
+    for field, typename in field_type_dict.items():
+        # Extract the field from the collection
+        field_data = tauprods[field]
+        
+        # Convert the field to the specified type
+        # Use ak.values_astype to ensure the correct type at each level
+        # Enforce type with "var * typename"
+        enforced_field = ak.enforce_type(ak.values_astype(field_data, typename), f"var * {typename}")
+        
+        # Store the enforced field back in the temp dictionary
+        temp[field] = enforced_field
+    
+    # Zip the fields back into a NanoCollection-like structure
+    tauprods = ak.zip(temp)
+    
+    return tauprods
+
+
+# def has_matching_pt(vector1, vector2, threshold=1.0):
+#     """
+#     Checks if there is at least one object in vector1 that has a pt
+#     difference with any object in vector2 not greater than the threshold.
+    
+#     Parameters:
+#         vector1 (awkward.Array): The pt values of the first vector (nested).
+#         vector2 (awkward.Array): The pt values of the second vector (nested).
+#         threshold (float): The maximum allowable difference in pt.
+    
+#     Returns:
+#         awkward.Array: A boolean array with True if at least one pair of objects
+#                        has a pt difference not greater than the threshold, otherwise False.
+#     """
+#     # Cartesian product to get all pairs
+#     cartesian_product = ak.cartesian({"v1": vector1, "v2": vector2}, axis=-1, nested=True)
+    
+#     # Extract pt differences
+#     pt_diff_values = np.abs(cartesian_product["v1"].pt - cartesian_product["v2"].pt)
+    
+#     # Check if any of the differences are within the threshold
+#     has_match = ak.any(pt_diff_values <= threshold, axis=-1)
+    
+#     return has_match
+
+def has_pt_greater_equal(vector1, vector2, offset):
+    """
+    Checks if the pt of any object in vector1 is greater than or equal to 
+    the pt of any object in vector2 plus an offset.
+    
+    Parameters:
+        vector1 (awkward.Array): The pt values of the first vector (nested).
+        vector2 (awkward.Array): The pt values of the second vector (nested).
+        offset (float): The value to add to the pt of objects in vector2.
+    
+    Returns:
+        awkward.Array: A boolean array with True if at least one object in vector1 
+                       has pt greater than or equal to pt in vector2 + offset, otherwise False.
+    """
+    # Cartesian product to get all pairs
+    cartesian_product = ak.cartesian({"v1": vector1, "v2": vector2}, axis=-1, nested=True)
+    
+    # Extract pt values and apply the condition
+    pt_comparison = (cartesian_product["v1"].pt >= (cartesian_product["v2"].pt + offset))
+    
+    # Check if the condition is met for any pair
+    has_match = pt_comparison
+    
+    return has_match
+
+def delta_phi(phi1, phi2):
+    delta_phi = phi1 - phi2
+    return ak.where(delta_phi > np.pi, delta_phi - 2*np.pi, 
+                    ak.where(delta_phi < -np.pi, delta_phi + 2*np.pi, delta_phi))
+
+def delta_eta(eta1, eta2):
+    return eta1 - eta2
+
+def delta_r(vector1, vector2):
+    dphi = delta_phi(vector1.phi, vector2.phi)
+    deta = delta_eta(vector1.eta, vector2.eta)
+    return np.sqrt(deta**2 + dphi**2)
+
+def has_delta_r_less_equal(vector1, vector2, threshold):
+    """
+    Checks if the delta_R between any object in vector1 and any object in vector2
+    is less than or equal to the threshold.
+    
+    Parameters:
+        vector1 (awkward.Array): The first vector (nested) containing eta and phi.
+        vector2 (awkward.Array): The second vector (nested) containing eta and phi.
+        threshold (float): The delta_R threshold value.
+    
+    Returns:
+        awkward.Array: A boolean array with True if at least one pair of objects
+                       has delta_R less than or equal to the threshold, otherwise False.
+    """
+    # Cartesian product to get all pairs
+    cartesian_product = ak.cartesian({"v1": vector1, "v2": vector2}, axis=-1, nested=True)
+    
+    # Calculate delta_R
+    delta_r_values = delta_r(cartesian_product["v1"], cartesian_product["v2"])
+    
+    # Check if the delta_R is less than or equal to the threshold for any pair
+    has_match = ak.any(delta_r_values < threshold, axis=-1)
+    
+    return has_match

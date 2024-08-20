@@ -108,25 +108,24 @@ def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
         if ak.any(['dy' in proc for proc in processes]):
             print("Splitting Drell-Yan dataset...")
             events = self[split_dy](events,**kwargs)
-        print("Producing PU weights...")
+        print("Producing PU weights...")  
         events = self[pu_weight](events, **kwargs)
         print("Producing Muon weights...")
         events = self[muon_weight](events,do_syst = True, **kwargs)
         print("Producing Tau weights...")
         events = self[tau_weight](events,do_syst = True, **kwargs)
-        if (ak.max(events.mc_weight) > 1 or 
-            ak.max(events.pu_weight) > 1 or 
-            ak.max(events.normalization_weight) > 1 or 
-            ak.max(events.muon_weight_nom) > 1 or 
-            ak.max(events.tau_weight_nom) > 3):
+        # if (ak.max(events.mc_weight) > 1 or 
+        #     ak.max(events.pu_weight) > 1 or 
+        #     ak.max(events.normalization_weight) > 1 or 
+        #     ak.max(events.muon_weight_nom) > 1 or 
+        #     ak.max(events.tau_weight_nom) > 3):
             
-            with open("Check_weights.txt", "a") as file:
-                file.write(f"Max mc_weight: {ak.max(events.mc_weight)}\n")
-                file.write(f"Max pu_weight: {ak.max(events.pu_weight)}\n")
-                file.write(f"Max normalization_weight: {ak.max(events.normalization_weight)}\n")
-                file.write(f"Max muon_weight_nom: {ak.max(events.muon_weight_nom)}\n")
-                file.write(f"Max tau_weight_nom: {ak.max(events.tau_weight_nom)}\n")
-                
+            # with open("Check_weights.txt", "a") as file:
+            #     file.write(f"Max mc_weight: {ak.max(events.mc_weight)}\n")
+            #     file.write(f"Max pu_weight: {ak.max(events.pu_weight)}\n")
+            #     file.write(f"Max normalization_weight: {ak.max(events.normalization_weight)}\n")
+            #     file.write(f"Max muon_weight_nom: {ak.max(events.muon_weight_nom)}\n")
+            #     file.write(f"Max tau_weight_nom: {ak.max(events.tau_weight_nom)}\n")        
     print("Producing Hcand features...")
     events = self[hcand_features](events, **kwargs)       
     # features

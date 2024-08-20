@@ -281,17 +281,18 @@ def tau_selection(
     events = set_ak_column(events, "Tau.rawIdx", tau_local_indices)
 
     # https://cms-nanoaod-integration.web.cern.ch/integration/cms-swmaster/data106Xul17v2_v10_doc.html#Tau
-    tau_vs_e = DotDict(vvloose=2, vloose=3)
-    tau_vs_mu = DotDict(vloose=1, tight=4)
-    tau_vs_jet = DotDict(vvloose=2, loose=4, medium=5)
     
+    # Definition of the working points of the DeepTau 
+    deep_tau_vs_e_jet_wps = self.config_inst.x.deep_tau.vs_e_jet_wps
+    deep_tau_vs_mu_wps = self.config_inst.x.deep_tau.vs_mu_wps
+
     good_selections = {
         "tau_pt_20"     : events.Tau.pt > 20,
         "tau_eta_2p3"   : abs(events.Tau.eta) < 2.3,
         "tau_dz_0p2"    : abs(events.Tau.dz) < 0.2,
-        "DeepTauVSjet"  : events.Tau.idDeepTau2018v2p5VSjet >= tau_vs_jet.medium,
-        "DeepTauVSe"    : events.Tau.idDeepTau2018v2p5VSe   >= tau_vs_e.vvloose,
-        "DeepTauVSmu"   : events.Tau.idDeepTau2018v2p5VSmu  >= tau_vs_mu.tight,
+        "DeepTauVSjet"  : events.Tau.idDeepTau2018v2p5VSjet >= deep_tau_vs_e_jet_wps["VLoose"], 
+        "DeepTauVSe"    : events.Tau.idDeepTau2018v2p5VSe   >= deep_tau_vs_e_jet_wps["VVLoose"],
+        "DeepTauVSmu"   : events.Tau.idDeepTau2018v2p5VSmu  >= deep_tau_vs_mu_wps["VLoose"],
         "DecayMode"     : ((events.Tau.decayMode == 0) 
                            | (events.Tau.decayMode == 1)
                            | (events.Tau.decayMode == 2)

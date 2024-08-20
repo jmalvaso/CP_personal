@@ -29,10 +29,10 @@ def extra_lepton_veto(
         events: ak.Array,
         extra_electron_index: ak.Array,
         extra_muon_index: ak.Array,
-        hcand_pair: ak.Array,
+        # hcand_pair: ak.Array,
         **kwargs,
 ) -> tuple[ak.Array, SelectionResult]:
-
+ 
     #Selectin ALL leptons that pass extra lepton kinematic cuts
     extra_lep  = ak.Array(ak.concatenate([events.Muon[extra_muon_index],
                                           events.Electron[extra_electron_index]], axis=-1),
@@ -47,20 +47,12 @@ def extra_lepton_veto(
     '''
     ch_mask={}
     for the_ch in ["etau","mutau", "tautau"]: ch_mask[the_ch] = events.channel_id == self.config_inst.get_channel(the_ch).id
-    
+ 
     #check if the events contain a single pair i.e. number of rawIdxs in the hcand object is equal to 2
-    has_single_pair = ak.sum(ak.num(hcand_pair.rawIdx, axis=2),axis=1) == 2
+    # has_single_pair = ak.sum(ak.num(hcand_pair.rawIdx, axis=2),axis=1) == 2 ATTENTION: hcand has a single pair by construction 
     
-    empty_p4 = ak.zeros_like(ak.firsts(1 * hcand_pair, axis=1))[...,:0]
-    #Create the array of the pairs' first leptons
-    lep1 = ak.where(has_single_pair,
-                    ak.firsts(1*ak.flatten(hcand_pair, axis=2)[:,:1],axis=1),
-                    empty_p4)
-    #Create the array of the pairs' second leptons
-    lep2 = ak.where(has_single_pair,
-                    ak.firsts(1*ak.flatten(hcand_pair, axis=2)[:,1:2],axis=1),
-                    empty_p4)
-    
+    lep1 = events.hcand[:,0:1]
+    lep2 = events.hcand[:,1:2]
     #Calculate dR between first lepton and electrons or muons from loose selection list
     #Attention: this list also contains dR between lep1 and itself, so all entries have at least one dR that is 0 or a tiny number
     dr_lep1_ext = extra_lep.metric_table(lep1)
@@ -77,29 +69,6 @@ def extra_lepton_veto(
     #Unite the masks from the dR checks with respect to 1st and 2nd lepton, then reverse the result to use mask for selection
     has_no_exra_lep = ~(lep1_mask & lep2_mask)
     
-    # has_single_pair = ak.num(hcand_pair.pt, axis=1) == 2
-    # # keep all True -> [[True], [True], [True], ..., [True]]
-    # # because, not applying any veto if there is more than one higgs cand pair
-    # # and keeping those events for now
-    # dummy = (events.event < 0)[:,None]
-    # hcand_pair_p4 = ak.firsts(1 * hcand_pair, axis=1)
-    # hcand_lep1 = hcand_pair_p4[:,:1]
-    # hcand_lep2 = hcand_pair_p4[:,1:2]
-
-    # dr_hlep1_extraleps = extra_lep.metric_table(hcand_lep1)
-    # dr_hlep2_extraleps = extra_lep.metric_table(hcand_lep2)
-
-    # dr_mask = (
-    #     ((dr_hlep2_extraleps > 0.5) 
-    #      &  (dr_hlep1_extraleps > 0.001)) 
-    #     | (dr_hlep1_extraleps > 0.5))
-    
-    # has_extra_lepton = ak.where(has_single_pair, 
-    #                             ak.any(dr_mask, axis=-1),
-    #                             dummy)
-
-    # has_no_extra_lepton = ak.sum(has_extra_lepton, axis=1) == 0
-
     return events, SelectionResult(
         steps={
             "extra_lepton_veto": has_no_exra_lep

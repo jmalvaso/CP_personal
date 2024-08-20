@@ -32,6 +32,7 @@ def get_categories(
     ch_etau   = self.config_inst.get_channel("etau")
     ch_mutau  = self.config_inst.get_channel("mutau")
     ch_tautau = self.config_inst.get_channel("tautau")
+    #ch_emu    = self.config_inst.get_channel("emu")
 
     false_mask       = (abs(events.event) < 0)
     # single_triggered = false_mask
@@ -68,6 +69,7 @@ def get_categories(
         "cat_is_etau"           : [ch_etau.id, etau_channel_mask],
         "cat_is_mutau"          : [ch_mutau.id, mutau_channel_mask],
         "cat_is_tautau"         : [ch_tautau.id, tautau_channel_mask],
+        #"cat_is_tautau"         : [ch_emu.id, emu_channel_mask],
     }
     
     selection_steps  = {}

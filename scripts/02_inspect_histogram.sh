@@ -1,6 +1,6 @@
 #!/bin/bash
 args=(
-    /afs/cern.ch/user/s/stzakhar/work/higgs_cp/data/cf_store/analysis_higgs_cp/cf.MergeHistograms/run3_2022_postEE_nano_tau_v12_limited/data_mu_f/nominal/calib__example/sel__default/prod__example/0/hist__muon_eta.pickle
+    /eos/user/j/jmalvaso/higgs_cp_store/analysis_httcp/cf.SelectEvents/run3_2022_preEE_nano_tau_v12/wj_incl/nominal/calib__main/sel__main/dev/columns_0.parquet
 )
 
 cf_inspect "${args[@]}"
