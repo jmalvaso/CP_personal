@@ -4,13 +4,14 @@
 Prepare h-Candidate from SelectionResult: selected lepton indices & channel_id [trigger matched] 
 """
 
+
 from typing import Optional
-from columnflow.selection import SelectionResult
+from columnflow.selection import Selector, SelectionResult, selector
 from columnflow.selection.util import create_collections_from_masks
 from columnflow.util import maybe_import
 from columnflow.columnar_util import EMPTY_FLOAT, Route, set_ak_column
 
-from hcp.util import invariant_mass, deltaR, transverse_mass
+from httcp.util import delta_r, transverse_mass
 
 np = maybe_import("numpy")
 ak = maybe_import("awkward")
@@ -125,7 +126,7 @@ def emu_selection(
 
     preselection = {
         "is_os"         : (lep1.charge * lep2.charge) < 0,
-        "dr_0p5"        : deltaR(lep1, lep2) > 0.5,
+        "dr_0p5"        : delta_r(lep1, lep2) > 0.5,
         "mT_50"         : transverse_mass(lep1, events.PuppiMET) < 50
     }
 

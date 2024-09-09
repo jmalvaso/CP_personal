@@ -8,7 +8,9 @@ args=(
         --processes $processes
         --version $version
         --categories incl,mutau,etau,
-        --variables hcand_mass,tau_1_phi,tau_1_eta,electron_1_pt,electron_1_phi,electron_1_eta,muon_1_pt,muon_1_phi,muon_1_eta
+        --variables hcand_mass,tau_1_phi,tau_1_eta,tau_1_pt,electron_1_pt,electron_1_phi,electron_1_eta,muon_1_pt,muon_1_phi,muon_1_eta
+        --cf.PlotVariables1D-file-types pdf,png
+        --file-types pdf,png
         --general-settings "cms-label=pw"
         "${@:2}"
     )
