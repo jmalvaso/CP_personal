@@ -112,7 +112,7 @@ def higgscand(
 
     
     events = set_ak_column(events, "hcand", hcand_array_One_Higgs_cand)
-    
+
     return events,hcand_muon_indices,hcand_electron_indices,hcand_tau_indices,etau_channel_mask,mutau_channel_mask,tautau_channel_mask,hcand_array_One_Higgs_cand, SelectionResult(
         steps={
             "One_higgs_cand_per_event": sel_hcand,
