@@ -279,6 +279,7 @@ def add_triggers_run3_2022_preEE(config: od.Config) -> None:
                 TriggerLeg(
                     pdg_id=13,
                     min_pt=25.0,
+                    min_eta=2.4,
                     trigger_bits=3, 
                 ),
             ],
@@ -291,6 +292,7 @@ def add_triggers_run3_2022_preEE(config: od.Config) -> None:
                 TriggerLeg(
                     pdg_id=13,
                     min_pt=28.0,
+                    min_eta=2.4,
                     trigger_bits=3,
                 ),
             ],
@@ -307,6 +309,7 @@ def add_triggers_run3_2022_preEE(config: od.Config) -> None:
             TriggerLeg(
                 pdg_id=11,
                 min_pt=33.0,
+                min_eta=2.4,
                 # filter names:
                 # hltEle32WPTightGsfTrackIsoFilter
                 trigger_bits=1,
@@ -323,6 +326,7 @@ def add_triggers_run3_2022_preEE(config: od.Config) -> None:
                 TriggerLeg(
                     pdg_id=11,
                     min_pt=36.0,
+                    min_eta=2.4,
                     # filter names:
                     # hltEle35noerWPTightGsfTrackIsoFilter
                     trigger_bits=1,
@@ -343,6 +347,7 @@ def add_triggers_run3_2022_preEE(config: od.Config) -> None:
                 TriggerLeg(
                     pdg_id=11,
                     min_pt=27.0,
+                    min_eta=2.1,
                     # filter names:
                     # hltEle24erWPTightGsfTrackIsoFilterForTau
                     # hltOverlapFilterIsoEle24WPTightGsfLooseIsoPFTau30
@@ -351,6 +356,7 @@ def add_triggers_run3_2022_preEE(config: od.Config) -> None:
                 TriggerLeg(
                     pdg_id=15,
                     min_pt=35.0,
+                    min_eta=2.1,
                     # filter names:
                     # hltSelectedPFTau30LooseChargedIsolationL1HLTMatched
                     # hltOverlapFilterIsoEle24WPTightGsfLooseIsoPFTau30
@@ -372,6 +378,7 @@ def add_triggers_run3_2022_preEE(config: od.Config) -> None:
                 TriggerLeg(
                     pdg_id=13,
                     min_pt=21.0,
+                    min_eta=2.1,
                     # filter names:
                     # hltL3crIsoBigORMu18erTauXXer2p1L1f0L2f10QL3f20QL3trkIsoFiltered  # TODO Twiki sugests 2
                     # hltHpsOverlapFilterIsoMu20LooseMuTauWPDeepTauPFTau27L1Seeded (OverlapFilter PFTau) # TODO Twiki sugests 4 + 64  # noqa
@@ -380,6 +387,7 @@ def add_triggers_run3_2022_preEE(config: od.Config) -> None:
                 TriggerLeg(
                     pdg_id=15,
                     min_pt=32.0,
+                    min_eta=2.1,
                     # filter names:
                     # (DeepTau + HPS) # TODO Twiki sugests 8 + 32 + 512 + 262144
                     # hltHpsOverlapFilterIsoMu20LooseMuTauWPDeepTauPFTau27L1Seeded
@@ -399,6 +407,7 @@ def add_triggers_run3_2022_preEE(config: od.Config) -> None:
                 TriggerLeg(
                     pdg_id=15,
                     min_pt=40.0,
+                    min_eta=2.1,
                     # filter names:
                     # hltHpsDoublePFTau35MediumDitauWPDeepTauDz02 (Deeptau + HPS)
                     trigger_bits= 10, #8 + 32,
@@ -406,6 +415,7 @@ def add_triggers_run3_2022_preEE(config: od.Config) -> None:
                 TriggerLeg(
                     pdg_id=15,
                     min_pt=40.0,
+                    min_eta=2.1,
                     # filter names:
                     # hltHpsDoublePFTau35MediumDitauWPDeepTauDz02 (Deeptau + HPS)
                     trigger_bits= 10, #8 + 32,

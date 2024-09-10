@@ -62,6 +62,9 @@ def trigger_selection(
             # pt cut
             if leg.min_pt is not None:
                 leg_mask = leg_mask & (events.TrigObj.pt >= leg.min_pt)
+            # pt eta
+            if leg.min_eta is not None:
+                leg_mask = leg_mask & (events.TrigObj.eta < abs(leg.min_eta))
             # trigger bits match
             if leg.trigger_bits is not None:
                 # OR across bits themselves, AND between all decision in the list

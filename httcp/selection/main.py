@@ -259,6 +259,7 @@ def main(
                                                                 veto_muon_indices)
     results += extra_lepton_veto_results
 
+
     # and_selections = results.steps["trigger"]
     # for key in results.steps.keys():
     #     and_selections = and_selections & results.steps[key]
@@ -275,8 +276,21 @@ def main(
             #print("hcand-gentau matching")
             events, gentau_results = self[gentau_selection](events, True)
             results += gentau_results
-
-
+    
+    good_object_indices = SelectionResult(
+        objects={
+            "Muon": {
+                "Muon": good_muon_indices,
+            },
+            "Electron": {
+                "Electron": good_ele_indices,
+            },
+            "Tau": {
+                "Tau": good_tau_indices,
+            },
+        },
+    )
+    results += good_object_indices
    
     # combined event selection after all steps
   
