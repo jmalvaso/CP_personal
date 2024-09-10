@@ -65,6 +65,7 @@ def get_categories(
     #                                 & (ak.num(mutau_pair_indices, axis=1) == 2) 
     #                                 & (ak.num(tautau_pair_indices, axis=1) == 2))], 
     # }
+
     channel_selections = {
         "cat_is_etau"           : [ch_etau.id, etau_channel_mask],
         "cat_is_mutau"          : [ch_mutau.id, mutau_channel_mask],

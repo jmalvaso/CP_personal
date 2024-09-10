@@ -88,7 +88,7 @@ def mT(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
         f"Electron.{var}" for var in ["pt", "eta","phi", "mass","charge"]
     } | {
         f"Tau.{var}" for var in ["pt", "eta","phi", "mass","charge"]
-    } | {attach_coffea_behavior} | {"channel_id"},
+    } | {attach_coffea_behavior}, # | {"channel_id"},
     produces={
         "hcand_obj.mass"
     },

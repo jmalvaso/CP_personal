@@ -18,6 +18,7 @@ class TriggerLeg(object):
 
         - *pdg_id*: The id of the object that should have caused the trigger leg to fire.
         - *min_pt*: The minimum transverse momentum in GeV of the triggered object.
+        - *min_eta*: The maximum value of pseudorapidity of the triggered object.
         - *trigger_bits*: Integer bit mask or masks describing whether the last filter of a trigger fired.
           See https://github.com/cms-sw/cmssw/blob/master/PhysicsTools/NanoAOD/python/triggerObjects_cff.py.
           Per mask, any of the bits should match (*OR*). When multiple masks are configured, each of
@@ -30,6 +31,7 @@ class TriggerLeg(object):
         self,
         pdg_id: int | None = None,
         min_pt: float | int | None = None,
+        min_eta: float | int | None = None,
         trigger_bits: int | Sequence[int] | None = None,
     ):
         super().__init__()
@@ -37,17 +39,19 @@ class TriggerLeg(object):
         # instance members
         self._pdg_id = None
         self._min_pt = None
+        self._min_eta = None
         self._trigger_bits = None
 
         # set initial values
         self.pdg_id = pdg_id
         self.min_pt = min_pt
+        self.min_eta = min_eta
         self.trigger_bits = trigger_bits
 
     def __repr__(self):
         return (
             f"<{self.__class__.__name__} "
-            f"'pdg_id={self.pdg_id}, min_pt={self.min_pt}, trigger_bits={self.trigger_bits}' "
+            f"'pdg_id={self.pdg_id}, min_pt={self.min_pt}, min_eta={self.min_eta}, trigger_bits={self.trigger_bits}' "
             f"at {hex(id(self))}>"
         )
 
@@ -72,7 +76,19 @@ class TriggerLeg(object):
             raise TypeError(f"invalid min_pt: {min_pt}")
 
         return min_pt
+    
+    @typed
+    def min_eta(self, min_eta: int | float | None) -> float | None:
+        if min_eta is None:
+            return None
 
+        if isinstance(min_eta, int):
+            min_eta = float(min_eta)
+        if not isinstance(min_eta, float):
+            raise TypeError(f"invalid min_eta: {min_eta}")
+
+        return min_eta
+    
     @typed
     def trigger_bits(
         self,

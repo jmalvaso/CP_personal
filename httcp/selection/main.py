@@ -217,18 +217,22 @@ def main(
     # make sure events have at least one lepton pair
     # hcand pair: [ [[e1,tau1]], [[mu1,tau1],[tau1,tau2]], [[e1,tau2]], [[mu1,tau2]], [] ]
     hcand_pairs = ak.concatenate([etau_pair[:,None], mutau_pair[:,None], tautau_pair[:,None]], axis=1)
-
+    at_least_one_hcand = ak.num(hcand_pairs,axis=-1)>0
+    
 
     
-    #check if there are at least two leptons with at least one tau [before trigger obj matching]
-    _lepton_indices = ak.concatenate([good_muon_indices, good_ele_indices, good_tau_indices], axis=1)
-    prematch_mask = ((ak.num(_lepton_indices, axis=1) >= 2) & (ak.num(good_tau_indices, axis=1) >= 1))
+    #check if there are at least one hcand [before trigger obj matching]
+    #_lepton_indices = ak.concatenate([good_muon_indices, good_ele_indices, good_tau_indices], axis=1)
+    prematch_mask = ak.sum(ak.num(hcand_pairs,axis=-1)>0,axis=1)>0
+    #((ak.num(_lepton_indices, axis=1) >= 2) & (ak.num(good_tau_indices, axis=1) >= 1))
     # hcand results
-    events, good_muon_indices, good_ele_indices, good_tau_indices, etau_channel_mask, mutau_channel_mask, tautau_channel_mask, hcand_array, hcand_results = self[higgscand](events,trigger_results,hcand_pairs,True)
+    events, good_muon_indices, good_ele_indices, good_tau_indices, etau_channel_mask, mutau_channel_mask, tautau_channel_mask, hcand_array, hcand_results = self[higgscand](events,trigger_results,hcand_pairs,domatch = True)
     
     # check if there are at least two leptons with at least one tau [after trigger obj matching]
-    _lepton_indices = ak.concatenate([good_muon_indices, good_ele_indices, good_tau_indices], axis=1)
-    postmatch_mask = ((ak.num(_lepton_indices, axis=1) >= 2) & (ak.num(good_tau_indices, axis=1) >= 1))
+    # _lepton_indices = ak.concatenate([good_muon_indices, good_ele_indices, good_tau_indices], axis=1)
+    at_least_one_hcand_matched = ak.num(hcand_array,axis=-1)==2
+    postmatch_mask = at_least_one_hcand_matched
+    #((ak.num(_lepton_indices, axis=1) >= 2) & (ak.num(good_tau_indices, axis=1) >= 1))
     match_res = SelectionResult(
         steps = {
             "Hcand_creation"  : prematch_mask,
@@ -240,6 +244,7 @@ def main(
 
     # channel selection
     # channel_id is now in columns
+    
     events, channel_results = self[get_categories](events,
                                                    trigger_results,
                                                    etau_channel_mask,

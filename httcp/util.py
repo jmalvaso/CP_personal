@@ -54,22 +54,37 @@ def trigger_object_matching(
     #ak.any(, axis=axis)
     return any_match
 
-def hlt_path_fired(dictionary):
+# def hlt_path_fired(dictionary):
+#     from IPython import embed; embed()
+#     if len(dictionary) > 0:
+#         max_length = 0
+#         for key in dictionary.keys():
+#             temp_length = ak.max(ak.num(dictionary[key], axis=1))
+#             if temp_length > max_length: max_length = temp_length
+
+#         hlt_condition = {}
+#         for key in dictionary.keys():
+#             hlt_condition[key] = ak.pad_none(dictionary[key], target=max_length)
+#             hlt_condition[key] = ak.fill_none(hlt_condition[key],-1)[:,:,None]
+
+#         hlt_condition_values = list(hlt_condition.values())
+#         hlt_condition_values_concat = ak.concatenate(hlt_condition_values, axis=-1)
+#         HLT_path_fired = ak.max(hlt_condition_values_concat, axis=-1)
+#         return HLT_path_fired 
+
+def hlt_path_fired(events,dictionary):
+    HLT_path_fired = -1*ak.ones_like(ak.local_index(events.event), dtype=np.int64)
     if len(dictionary) > 0:
-        max_length = 0
+        # Start by collecting all the arrays from the dictionary
+        # Collect arrays from the dictionary
+        array_list = []
         for key in dictionary.keys():
-            temp_length = ak.max(ak.num(dictionary[key], axis=1))
-            if temp_length > max_length: max_length = temp_length
+            array_list.append(dictionary[key])
 
-        hlt_condition = {}
-        for key in dictionary.keys():
-            hlt_condition[key] = ak.pad_none(dictionary[key], target=max_length)
-            hlt_condition[key] = ak.fill_none(hlt_condition[key],-1)[:,:,None]
-
-        hlt_condition_values = list(hlt_condition.values())
-        hlt_condition_values_concat = ak.concatenate(hlt_condition_values, axis=-1)
-        HLT_path_fired = ak.max(hlt_condition_values_concat, axis=-1)
-        return HLT_path_fired 
+        # Stack all the arrays along the second axis (axis=1)
+        hlt_condition_values_concat = np.stack(array_list, axis=1)
+        HLT_path_fired = ak.fill_none(ak.max(hlt_condition_values_concat, axis=-1),-1)
+    return HLT_path_fired 
     
 # Define the fill_missing function
 def fill_missing(arr, fill_value):

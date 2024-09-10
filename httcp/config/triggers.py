@@ -360,11 +360,11 @@ def add_triggers_run3_2022_preEE(config: od.Config) -> None:
             applies_to_dataset=(lambda dataset_inst: dataset_inst.is_mc or dataset_inst.x.era >= "A"),
             tags={"cross_trigger", "cross_e_tau", "channel_e_tau"},
         ),
-        # #
-        # # mu tauh
-        # #
-        # # Muon : https://github.com/cms-sw/cmssw/blob/203834e3ae301f2564423dd1cc84bebf660519b9/PhysicsTools/NanoAOD/python/triggerObjects_cff.py#L121
-        # # Tau  : https://github.com/cms-sw/cmssw/blob/203834e3ae301f2564423dd1cc84bebf660519b9/PhysicsTools/NanoAOD/python/triggerObjects_cff.py#L149
+        #
+        # mu tauh
+        #
+        # Muon : https://github.com/cms-sw/cmssw/blob/203834e3ae301f2564423dd1cc84bebf660519b9/PhysicsTools/NanoAOD/python/triggerObjects_cff.py#L121
+        # Tau  : https://github.com/cms-sw/cmssw/blob/203834e3ae301f2564423dd1cc84bebf660519b9/PhysicsTools/NanoAOD/python/triggerObjects_cff.py#L149
         Trigger(
             name="HLT_IsoMu20_eta2p1_LooseDeepTauPFTauHPS27_eta2p1_CrossL1",
             id=13,

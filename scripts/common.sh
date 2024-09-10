@@ -63,7 +63,7 @@ case $1 in
     config="run3_2022_preEE_nano_tau_v12_limited"
     #Datasets to use
     datasets="dy_incl"
-    processes="dy_z2mumu,dy_z2ee,dy_z2ll"
+    processes="dy_lep" #"dy_z2mumu,dy_z2ee,dy_z2ll"
     ;;
     "run3_DY_tautau_lim")
     config="run3_2022_preEE_nano_tau_v12_limited"
